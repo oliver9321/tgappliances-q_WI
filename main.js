@@ -52,18 +52,59 @@ function resetAutoPlay() {
   startAutoPlay();
 }
 
+// Menú móvil unificado (reemplaza la función initMobileMenu anterior)
+// Menú móvil
 function initMobileMenu() {
   const mobileMenuToggle = document.getElementById("mobileMenuToggle");
   const navMenu = document.getElementById("navMenu");
-
-  mobileMenuToggle.addEventListener("click", () => {
-    navMenu.classList.toggle("active");
-  });
-
-  document.querySelectorAll(".nav-link").forEach((link) => {
-    link.addEventListener("click", () => {
-      navMenu.classList.remove("active");
+  const body = document.body;
+  
+  // Verificar si ya existe un overlay, si no, crearlo
+  let overlay = document.querySelector('.menu-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'menu-overlay';
+    body.appendChild(overlay);
+  }
+  
+  // Función para abrir/cerrar menú
+  function toggleMenu() {
+    mobileMenuToggle.classList.toggle('active');
+    navMenu.classList.toggle('active');
+    overlay.classList.toggle('active');
+    body.classList.toggle('menu-open');
+    
+    // Cambiar el atributo aria-expanded para accesibilidad
+    const isExpanded = navMenu.classList.contains('active');
+    mobileMenuToggle.setAttribute('aria-expanded', isExpanded);
+  }
+  
+  // Abrir/cerrar al hacer click en el botón
+  mobileMenuToggle.addEventListener('click', toggleMenu);
+  
+  // Cerrar al hacer click en overlay
+  overlay.addEventListener('click', toggleMenu);
+  
+  // Cerrar al hacer click en cualquier enlace
+  const navLinks = document.querySelectorAll('.nav-link, .book-now-btn');
+  navLinks.forEach(link => {
+    link.addEventListener('click', function() {
+      if (navMenu.classList.contains('active')) {
+        toggleMenu();
+      }
     });
+  });
+  
+  // Cerrar al redimensionar a pantalla grande
+  window.addEventListener('resize', function() {
+    if (window.innerWidth > 768 && navMenu.classList.contains('active')) {
+      toggleMenu();
+    }
+  });
+  
+  // Prevenir que el click dentro del menú cierre el menú
+  navMenu.addEventListener('click', function(e) {
+    e.stopPropagation();
   });
 }
 
@@ -141,25 +182,27 @@ function initContactForm() {
 
   if (!form) return;
 
-  // ✅ Bloquear caracteres inválidos en teléfono
-  phoneInput.addEventListener("input", (e) => {
-    let value = e.target.value;
+  // Bloquear caracteres inválidos en teléfono
+  if (phoneInput) {
+    phoneInput.addEventListener("input", (e) => {
+      let value = e.target.value;
 
-    // quitar todo lo que no sea número
-    value = value.replace(/\D/g, "");
+      // quitar todo lo que no sea número
+      value = value.replace(/\D/g, "");
 
-    // limitar a 10 dígitos US
-    value = value.substring(0, 10);
+      // limitar a 10 dígitos US
+      value = value.substring(0, 10);
 
-    // formatear estilo US (860) 123-4567
-    const formatted = formatUSPhone(value);
-    e.target.value = formatted;
-  });
+      // formatear estilo US (860) 123-4567
+      const formatted = formatUSPhone(value);
+      e.target.value = formatted;
+    });
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const rawPhone = document.getElementById("phone").value.replace(/\D/g, "");
+    const rawPhone = document.getElementById("phone")?.value.replace(/\D/g, "") || "";
 
     const formDataObj = {
       name: document.getElementById("name").value.trim(),
@@ -168,19 +211,19 @@ function initContactForm() {
       message: document.getElementById("message").value.trim(),
     };
 
-    // ✅ required fields
+    // required fields
     if (!formDataObj.name || !formDataObj.email || !formDataObj.message) {
       showMessage("Please fill in all required fields.", "error");
       return;
     }
 
-    // ✅ email validation (más estricta)
+    // email validation (más estricta)
     if (!isValidEmail(formDataObj.email)) {
       showMessage("Please enter a valid email address.", "error");
       return;
     }
 
-    // ✅ phone validation (solo si escribieron algo)
+    // phone validation (solo si escribieron algo)
     if (formDataObj.phone && formDataObj.phone.length !== 10) {
       showMessage("Please enter a valid 10-digit phone number.", "error");
       return;
@@ -221,8 +264,6 @@ function initContactForm() {
       console.error("Form error:", error);
       showMessage("❌ Network error. Please try again later.", "error");
     }
-
-    console.log("Form submitted:", formDataObj);
   });
 
   function formatUSPhone(value) {
@@ -233,6 +274,8 @@ function initContactForm() {
   }
 
   function showMessage(message, type) {
+    if (!formMessage) return;
+    
     formMessage.style.display = "block";
     formMessage.textContent = message;
     formMessage.className = `form-message ${type}`;
@@ -251,12 +294,16 @@ function initContactForm() {
 }
 
 function initFooterYear() {
-  document.getElementById("currentYear").textContent = new Date().getFullYear();
+  const yearElement = document.getElementById("currentYear");
+  if (yearElement) {
+    yearElement.textContent = new Date().getFullYear();
+  }
 }
 
+// Inicialización única
 document.addEventListener("DOMContentLoaded", () => {
   initSlideshow();
-  initMobileMenu();
+  initMobileMenu(); // Esta es la función unificada que reemplaza la anterior
   initSmoothScroll();
   initNavbarScroll();
   initActiveNavLink();
