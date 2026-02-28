@@ -5,17 +5,16 @@
 }
 
 :root {
-  --primary-color: #2c3e50;
-  --secondary-color: #34495e;
-  --accent-color: #e74c3c;
-  --text-dark: #2c3e50;
-  --text-light: #7f8c8d;
-  --bg-light: #ffffff;
-  --bg-gray: #f8f9fa;
-  --border-color: #e1e8ed;
-  --transition: all 0.3s ease;
-  --wine-red: #800020; /* Color vino del logo */
-  --text-white: #ffffff;
+    --primary-color: #2c3e50;
+    --secondary-color: #34495e;
+    --accent-color: #e74c3c;
+    --wine-red: #800020;
+    --text-dark: #2c3e50;
+    --text-light: #7f8c8d;
+    --bg-light: #ffffff;
+    --bg-gray: #f8f9fa;
+    --border-color: #e1e8ed;
+    --transition: all 0.3s ease;
 }
 
 body {
@@ -1549,99 +1548,223 @@ body {
     color: rgba(255, 255, 255, 0.7);
 }
 
-/* --- MEDIA QUERIES ORIGINALES ACTUALIZADOS --- */
-@media (max-width: 768px) {
-    .top-bar {
-        display: none; /* Ocultamos barra superior en móviles por espacio */
-    }
-    .navbar {
-        top: 0;
-    }
-    .hero {
-        margin-top: 80px;
-    }
-    .mobile-menu-toggle {
-      display: flex;
-    }
-  
-    .nav-menu {
-      position: fixed;
-      top: 90px;
-      left: -100%;
-      width: 100%;
-      height: calc(100vh - 90px);
-      flex-direction: column;
-      background: var(--bg-light);
-      padding: 30px;
-      gap: 20px;
-      transition: left 0.3s ease;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    }
-  
-    .nav-menu.active {
-      left: 0;
-    }
-  
-    .hero {
-      height: 500px;
-    }
-  
-    .slide-content h1 {
-      font-size: 2rem;
-    }
-  
-    .slide-content p {
-      font-size: 1.1rem;
-    }
-  
-    .slide-nav {
-      width: 40px;
-      height: 40px;
-      font-size: 18px;
-    }
-  
-    .box-grid {
-      grid-template-columns: 1fr;
-    }
-  
-    .category-grid {
-      grid-template-columns: 1fr;
-    }
-  
-    .about-content {
-      grid-template-columns: 1fr;
-    }
-  
-    .about-features {
-      grid-template-columns: 1fr;
-    }
-  
-    .contact-content {
-      grid-template-columns: 1fr;
-    }
-  
-    .footer-content {
-      grid-template-columns: 1fr;
-    }
-  
-    .section-title {
-      font-size: 2rem;
-    }
-}
-/* Reajuste del Hero por la nueva altura de la barra */
+
 .hero {
-  margin-top: 130px; /* Ajustado para compensar top-bar + navbar */
+  margin-top: 130px; 
 }
 
-/* Responsivo */
+/* Reemplaza las media queries existentes con estas */
+
 @media (max-width: 768px) {
-  .top-info {
-    display: none; /* Ocultamos info larga en móvil */
-  }
-  .top-bar-container {
-    justify-content: center;
-  }
-  .hero {
-    margin-top: 110px;
-  }
+    /* Top Bar responsive */
+    .top-bar {
+        display: block; /* Asegurar que se muestre */
+        padding: 12px 0;
+        position: relative; /* Cambiar a relative para mejor flujo */
+        width: 100%;
+        z-index: 1001;
+    }
+    
+    .top-bar-container {
+        flex-direction: column;
+        gap: 12px;
+        padding: 0 15px;
+    }
+    
+    .top-info {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+    }
+    
+    .top-info span {
+        justify-content: center;
+        font-size: 14px;
+        text-align: center;
+        width: 100%;
+        padding: 4px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .top-info span:last-child {
+        border-bottom: none;
+    }
+    
+    .top-social {
+        justify-content: center;
+        gap: 25px;
+        padding: 8px 0;
+        width: 100%;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    
+   .top-info a, 
+.top-social a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px; /* Tamaño mínimo táctil */
+    padding: 0 5px;
+}
+    
+    /* Ajuste del navbar */
+    .navbar {
+        top: 0; /* Resetear posición */
+        position: sticky; /* Cambiar a sticky para mejor comportamiento */
+    }
+    
+    .hero {
+        margin-top: 20px; /* Ajustar margen */
+    }
+    
+    /* Mobile menu toggle */
+    .mobile-menu-toggle {
+        display: flex;
+    }
+    
+    .nav-menu {
+        position: fixed;
+        top: 70px; /* Ajustar según altura del navbar */
+        left: -100%;
+        width: 100%;
+        height: calc(100vh - 70px);
+        flex-direction: column;
+        background: var(--bg-light);
+        padding: 30px;
+        gap: 20px;
+        transition: left 0.3s ease;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        z-index: 999;
+        overflow-y: auto;
+    }
+    
+    .nav-menu.active {
+        left: 0;
+    }
+    
+    /* Resto de estilos responsive existentes */
+    .hero {
+        height: 500px;
+    }
+    
+    .slide-content h1 {
+        font-size: 2rem;
+    }
+    
+    .slide-content p {
+        font-size: 1.1rem;
+    }
+    
+    .slide-nav {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    
+    .box-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .category-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .about-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .about-features {
+        grid-template-columns: 1fr;
+    }
+    
+    .contact-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .footer-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+}
+
+/* Media query para móviles pequeños */
+@media (max-width: 480px) {
+    .top-info span {
+        font-size: 13px;
+        flex-wrap: wrap;
+    }
+    
+ .top-info span i {
+    width: 20px;
+    text-align: center;
+}
+    
+    .top-social {
+        gap: 20px;
+    }
+    
+    .logo img {
+        height: 45px;
+        width: auto;
+        max-width: 200px;
+    }
+    
+    .hero {
+        height: 400px;
+        margin-top: 10px;
+    }
+    
+    .slide-content h1 {
+        font-size: 1.5rem;
+    }
+    
+    .slide-content p {
+        font-size: 1rem;
+    }
+    
+    .cta-button {
+        padding: 12px 30px;
+        font-size: 16px;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+    }
+    
+    .info-boxes,
+    .categories,
+    .about,
+    .policies,
+    .contact {
+        padding: 40px 0;
+    }
+    
+    /* Ajustes para los enlaces de teléfono en móvil */
+    .top-info a {
+        display: inline-block;
+        padding: 5px;
+    }
+    
+    .top-info span {
+        word-break: break-word;
+    }
+}
+
+/* Media query para tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .top-info {
+        gap: 10px;
+        font-size: 12px;
+    }
+    
+    .nav-menu {
+        gap: 15px;
+    }
+    
+    .logo img {
+        width: 220px;
+    }
 }
