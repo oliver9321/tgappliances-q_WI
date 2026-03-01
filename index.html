@@ -56,8 +56,6 @@
 }
 </script>
 
-</head>
-
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17985693945"></script>
 <script>
@@ -67,6 +65,25 @@
 
   gtag('config', 'AW-17985693945');
 </script>
+
+<script>
+function gtag_report_conversion(url) {
+  var callback = function () {
+    if (typeof(url) != 'undefined') {
+      window.location = url;
+    }
+  };
+  gtag('event', 'conversion', {
+      'send_to': 'AW-17985693945/4jGGCPqJn4EcEPnRn4BD',
+      'value': 1.0,
+      'currency': 'USD',
+      'event_callback': callback
+  });
+  return false;
+}
+</script>
+
+</head>
 
 <body>
   <div class="top-bar">
@@ -79,9 +96,9 @@
           </a>
         </span>
         <span>
-          <a href="tel:+18602617084" style="text-decoration:none; color:inherit;"> <i class="fas fa-phone"></i> (860)
+          <a href="tel:+18602617084" onclick="return gtag_report_conversion('tel:+18602617084');" style="text-decoration:none; color:inherit;"> <i class="fas fa-phone"></i> (860)
             261-7084</a> |
-          <a href="tel:+18607171810" style="text-decoration:none; color:inherit;"> <i class="fas fa-mobile"></i> (860)
+          <a href="tel:+18607171810" onclick="return gtag_report_conversion('tel:+18607171810');" style="text-decoration:none; color:inherit;"> <i class="fas fa-mobile"></i> (860)
             717-1810</a>
         </span>
         <span><i class="fas fa-clock"></i> Mon - Fri: 10AM-5PM | Saturday - Sunday: Closed</span>
@@ -113,7 +130,7 @@
         <li><a href="#about" class="nav-link">About</a></li>
         <li><a href="#policies" class="nav-link">Policies</a></li>
         <li><a href="#contact" class="nav-link">Contact</a></li>
-        <li><a href="tel:+18602617084" class="book-now-btn">Call Now</a></li>
+        <li><a onclick="return gtag_report_conversion('tel:+18602617084');" href="tel:+18602617084" class="book-now-btn">Call Now</a></li>
       </ul>
     </div>
   </nav>
@@ -127,7 +144,7 @@
           <h1>Affordable Used Appliances in Connecticut</h1>
           <p>Serving Plainville and all Connecticut with quality inspected refrigerators, washers, dryers and stoves at
             unbeatable prices.</p>
-          <a href="tel:+18602617084" class="cta-button">Contact Us</a>
+          <a onclick="return gtag_report_conversion('tel:+18602617084');" href="tel:+18602617084" class="cta-button">Contact Us</a>
         </div>
       </div>
       <div class="slide">
@@ -146,7 +163,7 @@
         <div class="slide-content">
           <h1>Used Appliances in Plainville, Connecticut</h1>
           <p>Affordable Prices, Excellent Service</p>
-          <a href="tel:+18602617084" class="cta-button">Contact Us</a>
+          <a onclick="return gtag_report_conversion('tel:+18602617084');" href="tel:+18602617084" class="cta-button">Contact Us</a>
         </div>
       </div>
       <div class="slide">
@@ -460,9 +477,9 @@
           <div class="info-item">
             <h3>Call Us</h3>
             <p>
-              <a href="tel:+18602617084" style="color:#0c0b0b;text-decoration:none;">☎️ (860) 261-7084</a>
+              <a onclick="return gtag_report_conversion('tel:+18602617084');" href="tel:+18602617084" style="color:#0c0b0b;text-decoration:none;">☎️ (860) 261-7084</a>
               <br>
-              <a href="tel:+18607171810" style="color:#0c0b0b;text-decoration:none;">📞 (860) 717-1810</a>
+              <a onclick="return gtag_report_conversion('tel:+18607171810');" href="tel:+18607171810" style="color:#0c0b0b;text-decoration:none;">📞 (860) 717-1810</a>
             </p>
           </div>
 
