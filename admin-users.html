@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usuarios | TG Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="/admin.css" />
+</head>
+<body>
+
+  <header id="admin-header">
+    <div class="header-left">
+      <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+        <i class="fas fa-bars"></i>
+      </button>
+      <a href="/admin-products.html" class="header-logo">
+        <img src="/logo2.png" alt="TG Pre-Owned Appliances" />
+      </a>
+      <span class="header-title">Admin Panel</span>
+    </div>
+    <div class="header-right">
+      <span id="nav-username" class="nav-username"></span>
+      <button id="logout-btn" class="btn btn-outline-light">
+        <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+      </button>
+    </div>
+  </header>
+
+  <div class="admin-layout">
+    <aside id="admin-sidebar">
+      <nav class="sidebar-nav">
+        <a class="nav-item" data-page="categories" href="/admin-categories.html">
+          <i class="fas fa-tags"></i><span>Categorías</span>
+        </a>
+        <a class="nav-item" data-page="products" href="/admin-products.html">
+          <i class="fas fa-box"></i><span>Productos</span>
+        </a>
+        <a class="nav-item" data-page="users" href="/admin-users.html">
+          <i class="fas fa-users"></i><span>Usuarios</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main id="admin-main">
+      <div id="page-content"></div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal-overlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h3 id="modal-title"></h3>
+        <button id="modal-close" class="modal-close" aria-label="Cerrar">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/admin/pages/users-page.js"></script>
+</body>
+</html>

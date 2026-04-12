@@ -237,6 +237,8 @@ img {
   text-align: left;
   transition: var(--transition);
   border-left: 3px solid transparent;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .nav-item i {
@@ -262,7 +264,6 @@ img {
    ============================================================ */
 
 #admin-main {
-  margin-left: var(--sidebar-width);
   padding: 28px 32px;
   min-height: calc(100vh - var(--header-height));
   background: var(--bg-gray);
@@ -652,7 +653,6 @@ img {
   }
 
   #admin-main {
-    margin-left: 0;
     padding: 20px 16px;
   }
 
@@ -723,3 +723,189 @@ img {
     padding: 28px 20px;
   }
 }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInOverlay 0.2s ease;
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modal {
+  background: var(--bg-light);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUpModal 0.25s ease;
+}
+
+@keyframes slideUpModal {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.modal-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.1rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.modal-close:hover {
+  background: var(--bg-gray);
+  color: var(--text-dark);
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-body .admin-form {
+  box-shadow: none;
+  padding: 0;
+  max-width: 100%;
+}
+
+.modal-body .admin-form h3 {
+  display: none;
+}
+
+.modal-body .form-actions {
+  margin-top: 20px;
+  padding-top: 16px;
+}
+
+@media (max-width: 480px) {
+  .modal {
+    max-height: 95vh;
+  }
+  .modal-body {
+    padding: 16px;
+  }
+}
+
+/* ── Misc utilities ── */
+.required { color: var(--danger-color); }
+.label-hint { color: var(--text-light); font-weight: 400; font-size: 0.8rem; }
+.field-hint { font-size: 0.8rem; color: var(--text-light); margin-top: 4px; }
+.table-empty { text-align: center; color: var(--text-light); padding: 24px !important; }
+
+/* ── Icon edit button ── */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: var(--transition);
+}
+
+.btn-edit {
+  background: #eaf0fb;
+  color: #2980b9;
+}
+
+.btn-edit:hover {
+  background: #2980b9;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.td-actions {
+  text-align: center;
+}
+
+/* ── Table thumbnail ── */
+.table-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 5px;
+  display: block;
+}
+
+.no-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-gray);
+  border-radius: 5px;
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+/* ── Loading / error states ── */
+.loading-msg,
+.error-msg {
+  padding: 32px 24px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.loading-msg { color: var(--text-light); }
+.error-msg   { color: var(--danger-color); }
+
+/* ── Role badge ── */
+.role-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.role-admin  { background: #fde8e8; color: #800020; }
+.role-editor { background: #e8f4fd; color: #1a6fa8; }

@@ -10,7 +10,7 @@ export function getState() {
 }
 
 export function setCategories(list) {
-  state.categories = list
+  state.categories = Array.isArray(list) ? list : []
 }
 
 export function upsertCategory(item) {
@@ -23,7 +23,7 @@ export function upsertCategory(item) {
 }
 
 export function setProducts(list) {
-  state.products = list
+  state.products = Array.isArray(list) ? list : []
 }
 
 export function upsertProduct(item) {
@@ -36,7 +36,7 @@ export function upsertProduct(item) {
 }
 
 export function setUsers(list) {
-  state.users = list
+  state.users = Array.isArray(list) ? list : []
 }
 
 export function upsertUser(item) {

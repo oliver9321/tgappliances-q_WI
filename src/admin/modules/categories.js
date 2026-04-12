@@ -1,52 +1,39 @@
-/**
- * categories.js — Categories submódulo del Admin Panel
- * Gestiona el listado y formulario CRUD de categorías.
- */
-
 import { fetchCategories, createCategory, updateCategory } from '../api.js'
 import { getState, setCategories, upsertCategory } from '../state.js'
 import { validateCategory } from '../validators.js'
 import { showSuccess, showError } from '../notifications.js'
+import { openModal, closeModal, getModalBody } from '../modal.js'
 
-/** Referencia al contenedor del submódulo, asignada en init() */
 let containerEl = null
 
-// ============================================================
-// Helper: aplica errores de validación inline al formulario
-// ============================================================
+// ── Helpers ──────────────────────────────────────────────────
 
-/**
- * Limpia errores previos y aplica los nuevos al formulario.
- * @param {HTMLFormElement} form
- * @param {Record<string, string>} errors
- */
+function h(str) {
+  if (str == null) return ''
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
 function applyErrors(form, errors) {
-  // Limpiar errores previos
   form.querySelectorAll('.field-error').forEach(el => el.remove())
   form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'))
-
-  Object.entries(errors).forEach(([field, message]) => {
+  Object.entries(errors).forEach(([field, msg]) => {
     const input = form.querySelector(`[name="${field}"]`)
     if (!input) return
     input.classList.add('input-error')
-    const errorEl = document.createElement('span')
-    errorEl.className = 'field-error'
-    errorEl.textContent = message
-    input.insertAdjacentElement('afterend', errorEl)
+    const span = document.createElement('span')
+    span.className = 'field-error'
+    span.textContent = msg
+    input.insertAdjacentElement('afterend', span)
   })
 }
 
-// ============================================================
-// 17.1 — init(containerEl)
-// ============================================================
+// ── Init ─────────────────────────────────────────────────────
 
-/**
- * Inicializa el submódulo de categorías.
- * Carga datos desde la API, los guarda en state y renderiza la lista.
- * @param {HTMLElement} el — contenedor del submódulo
- */
 export async function init(el) {
   containerEl = el
+  containerEl.innerHTML = '<p class="loading-msg"><i class="fas fa-spinner fa-spin"></i> Cargando categorías...</p>'
 
   try {
     const list = await fetchCategories()
@@ -55,44 +42,39 @@ export async function init(el) {
     showError(err.message || 'Error al cargar las categorías')
   }
 
+  // Always render the table, even if fetch failed (shows empty state)
   renderList()
 }
 
-// ============================================================
-// 17.2 — renderList()
-// ============================================================
+// ── List ─────────────────────────────────────────────────────
 
-/**
- * Genera la tabla HTML de categorías y la inyecta en containerEl.
- * Lee desde getState().categories.
- */
 export function renderList() {
   if (!containerEl) return
+  const list = getState().categories
 
-  const categories = getState().categories
-
-  const rows = categories.map(cat => {
-    const badgeClass = cat.active ? 'badge badge-active' : 'badge badge-inactive'
-    const badgeText = cat.active ? 'Activo' : 'Inactivo'
-    const date = cat.dateCreation ? new Date(cat.dateCreation).toLocaleDateString('es-MX') : '—'
-
-    return `
-      <tr>
-        <td>${escapeHtml(cat.name)}</td>
-        <td><span class="${badgeClass}">${badgeText}</span></td>
-        <td>${date}</td>
-        <td>
-          <button class="btn btn-sm btn-secondary btn-edit-cat" data-id="${cat._id}">
-            <i class="fas fa-pencil-alt"></i> Editar
-          </button>
-        </td>
-      </tr>`
+  const rows = list.map(cat => {
+    const badge = cat.active
+      ? '<span class="badge badge-active">Activo</span>'
+      : '<span class="badge badge-inactive">Inactivo</span>'
+    const date = cat.dateCreation
+      ? new Date(cat.dateCreation).toLocaleDateString('es-MX') : '—'
+    return `<tr>
+      <td>${h(cat.name)}</td>
+      <td>${h(cat.description || '—')}</td>
+      <td>${badge}</td>
+      <td>${date}</td>
+      <td class="td-actions">
+        <button class="btn-icon btn-edit" data-id="${h(cat._id)}" title="Editar">
+          <i class="fas fa-pencil-alt"></i>
+        </button>
+      </td>
+    </tr>`
   }).join('')
 
   containerEl.innerHTML = `
     <div class="section-header">
-      <h2>Categorías</h2>
-      <button class="btn btn-primary" id="btn-new-category">
+      <h2><i class="fas fa-tags"></i> Categorías</h2>
+      <button class="btn btn-primary" id="btn-new-cat">
         <i class="fas fa-plus"></i> Nueva Categoría
       </button>
     </div>
@@ -101,193 +83,112 @@ export function renderList() {
         <thead>
           <tr>
             <th>Nombre</th>
+            <th>Descripción</th>
             <th>Estado</th>
-            <th>Fecha de creación</th>
-            <th>Acciones</th>
+            <th>Fecha creación</th>
+            <th style="width:60px">Editar</th>
           </tr>
         </thead>
         <tbody>
-          ${rows.length ? rows : '<tr><td colspan="4" style="text-align:center;color:var(--text-light);padding:24px">Sin categorías registradas</td></tr>'}
+          ${rows || '<tr><td colspan="5" class="table-empty">Sin categorías registradas</td></tr>'}
         </tbody>
       </table>
     </div>`
 
-  // Botón "Nueva Categoría"
-  containerEl.querySelector('#btn-new-category').addEventListener('click', () => openForm())
+  containerEl.querySelector('#btn-new-cat').addEventListener('click', () => openForm())
 
-  // Botones "Editar" por fila
-  containerEl.querySelectorAll('.btn-edit-cat').forEach(btn => {
+  containerEl.querySelectorAll('.btn-edit').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = btn.dataset.id
-      const item = getState().categories.find(c => c._id === id)
+      const item = getState().categories.find(c => c._id === btn.dataset.id)
       if (item) openForm(item)
     })
   })
 }
 
-// ============================================================
-// 17.3 — openForm(item?)
-// ============================================================
+// ── Form modal ────────────────────────────────────────────────
 
-/**
- * Renderiza el formulario de categoría (crear o editar).
- * @param {object} [item] — categoría existente para editar; omitir para crear
- */
 export function openForm(item) {
-  if (!containerEl) return
-
   const isEdit = Boolean(item)
-  const title = isEdit ? 'Editar Categoría' : 'Nueva Categoría'
+  const activeVal = isEdit ? (item.active ? 'true' : 'false') : 'true'
 
-  // Campos de solo lectura (solo en modo edición)
-  const readonlyFields = isEdit ? `
-    <div class="form-group">
-      <label>Fecha de creación</label>
-      <input type="text" value="${escapeHtml(item.dateCreation || '—')}" disabled>
-    </div>
-    <div class="form-group">
-      <label>Creado por</label>
-      <input type="text" value="${escapeHtml(item.createdBy || '—')}" disabled>
+  const metaFields = isEdit ? `
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha de creación</label>
+        <input type="text" value="${h(item.dateCreation || '—')}" disabled>
+      </div>
+      <div class="form-group">
+        <label>Creado por</label>
+        <input type="text" value="${h(item.createdBy || '—')}" disabled>
+      </div>
     </div>` : ''
 
-  // Valor del selector active
-  const activeSelected = isEdit ? (item.active ? 'true' : 'false') : 'true'
-
-  containerEl.innerHTML = `
-    <div class="section-header">
-      <h2>${title}</h2>
-    </div>
-    <form class="admin-form" id="category-form" novalidate>
-      <h3>${title}</h3>
-
+  openModal(isEdit ? 'Editar Categoría' : 'Nueva Categoría', `
+    <form id="cat-form" novalidate>
       <div class="form-group">
-        <label for="cat-name">Nombre <span style="color:var(--danger-color)">*</span></label>
-        <input
-          type="text"
-          id="cat-name"
-          name="name"
-          value="${isEdit ? escapeHtml(item.name) : ''}"
-          placeholder="Nombre de la categoría"
-          required
-        >
+        <label for="cat-name">Nombre <span class="required">*</span></label>
+        <input type="text" id="cat-name" name="name"
+          value="${isEdit ? h(item.name) : ''}"
+          placeholder="Nombre de la categoría" autofocus>
       </div>
-
       <div class="form-group">
-        <label for="cat-description">Descripción</label>
-        <textarea
-          id="cat-description"
-          name="description"
-          placeholder="Descripción opcional"
-        >${isEdit ? escapeHtml(item.description || '') : ''}</textarea>
+        <label for="cat-desc">Descripción</label>
+        <textarea id="cat-desc" name="description"
+          placeholder="Descripción opcional">${isEdit ? h(item.description || '') : ''}</textarea>
       </div>
-
       <div class="form-group">
-        <label for="cat-active">Estado <span style="color:var(--danger-color)">*</span></label>
+        <label for="cat-active">Estado <span class="required">*</span></label>
         <select id="cat-active" name="active">
-          <option value="true"  ${activeSelected === 'true'  ? 'selected' : ''}>Activo</option>
-          <option value="false" ${activeSelected === 'false' ? 'selected' : ''}>Inactivo</option>
+          <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Activo</option>
+          <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactivo</option>
         </select>
       </div>
-
-      ${readonlyFields}
-
+      ${metaFields}
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">
-          <i class="fas fa-save"></i> Guardar
+          <i class="fas fa-save"></i> ${isEdit ? 'Actualizar' : 'Crear'}
         </button>
-        <button type="button" class="btn btn-secondary" id="btn-cancel-cat">
+        <button type="button" class="btn btn-secondary" id="btn-cancel">
           <i class="fas fa-times"></i> Cancelar
         </button>
       </div>
-    </form>`
+    </form>`)
 
-  // Cancelar → volver a la lista
-  containerEl.querySelector('#btn-cancel-cat').addEventListener('click', () => closeForm())
-
-  // Submit
-  const form = containerEl.querySelector('#category-form')
-  form.addEventListener('submit', (e) => handleSubmit(e, item))
+  getModalBody().querySelector('#btn-cancel').addEventListener('click', closeModal)
+  getModalBody().querySelector('#cat-form').addEventListener('submit', e => handleSubmit(e, item))
 }
 
-// ============================================================
-// closeForm
-// ============================================================
+// ── Submit ────────────────────────────────────────────────────
 
-/**
- * Cierra el formulario y vuelve a la lista.
- */
-export function closeForm() {
-  renderList()
-}
-
-// ============================================================
-// 17.4 — handleSubmit (form submit)
-// ============================================================
-
-/**
- * Maneja el envío del formulario de categoría.
- * Valida, llama a la API, actualiza state y re-renderiza.
- * @param {SubmitEvent} e
- * @param {object|undefined} item — categoría existente (edición) o undefined (creación)
- */
 async function handleSubmit(e, item) {
   e.preventDefault()
-
   const form = e.target
-  const formData = new FormData(form)
-
+  const fd = new FormData(form)
   const data = {
-    name: formData.get('name'),
-    description: formData.get('description') || '',
-    active: formData.get('active') === 'true',
+    name:        fd.get('name'),
+    description: fd.get('description') || '',
+    active:      fd.get('active') === 'true',
   }
 
-  // Validación client-side (Req 7.1)
   const { valid, errors } = validateCategory(data)
-  if (!valid) {
-    applyErrors(form, errors)
-    return
-  }
-
-  // Limpiar errores previos si la validación pasa
+  if (!valid) { applyErrors(form, errors); return }
   applyErrors(form, {})
 
-  // Deshabilitar botón de submit mientras se procesa
-  const submitBtn = form.querySelector('[type="submit"]')
-  submitBtn.disabled = true
+  const btn = form.querySelector('[type="submit"]')
+  btn.disabled = true
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'
 
   try {
-    let result
-    if (item) {
-      result = await updateCategory(item._id, data)
-    } else {
-      result = await createCategory(data)
-    }
-
+    const result = item
+      ? await updateCategory(item._id, data)
+      : await createCategory(data)
     upsertCategory(result)
+    closeModal()
     renderList()
     showSuccess(item ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente')
   } catch (err) {
     showError(err.message || 'Error al guardar la categoría')
-    submitBtn.disabled = false
+    btn.disabled = false
+    btn.innerHTML = `<i class="fas fa-save"></i> ${item ? 'Actualizar' : 'Crear'}`
   }
-}
-
-// ============================================================
-// Utility
-// ============================================================
-
-/**
- * Escapa caracteres HTML para evitar XSS al inyectar en innerHTML.
- * @param {string} str
- * @returns {string}
- */
-function escapeHtml(str) {
-  if (str == null) return ''
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }

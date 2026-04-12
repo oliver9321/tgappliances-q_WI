@@ -1,67 +1,39 @@
-/**
- * users.js — Users submódulo del Admin Panel
- * Gestiona el listado y formulario CRUD de usuarios.
- * El campo `password` NUNCA se muestra en la lista ni se pre-carga en el formulario.
- */
-
 import { fetchUsers, createUser, updateUser } from '../api.js'
 import { getState, setUsers, upsertUser } from '../state.js'
 import { validateUser } from '../validators.js'
 import { showSuccess, showError } from '../notifications.js'
+import { openModal, closeModal, getModalBody } from '../modal.js'
 
-/** Referencia al contenedor del submódulo, asignada en init() */
 let containerEl = null
 
-// ============================================================
-// Helpers
-// ============================================================
+// ── Helpers ──────────────────────────────────────────────────
 
-/**
- * Escapa caracteres HTML para evitar XSS al inyectar en innerHTML.
- * @param {string} str
- * @returns {string}
- */
-function escapeHtml(str) {
+function h(str) {
   if (str == null) return ''
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
-/**
- * Limpia errores previos y aplica los nuevos al formulario.
- * @param {HTMLFormElement} form
- * @param {Record<string, string>} errors
- */
 function applyErrors(form, errors) {
   form.querySelectorAll('.field-error').forEach(el => el.remove())
   form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'))
-
-  Object.entries(errors).forEach(([field, message]) => {
+  Object.entries(errors).forEach(([field, msg]) => {
     const input = form.querySelector(`[name="${field}"]`)
     if (!input) return
     input.classList.add('input-error')
-    const errorEl = document.createElement('span')
-    errorEl.className = 'field-error'
-    errorEl.textContent = message
-    input.insertAdjacentElement('afterend', errorEl)
+    const span = document.createElement('span')
+    span.className = 'field-error'
+    span.textContent = msg
+    input.insertAdjacentElement('afterend', span)
   })
 }
 
-// ============================================================
-// 20.1 — init(containerEl)
-// ============================================================
+// ── Init ─────────────────────────────────────────────────────
 
-/**
- * Inicializa el submódulo de usuarios.
- * Carga datos desde la API, los guarda en state y renderiza la lista.
- * @param {HTMLElement} el — contenedor del submódulo
- */
 export async function init(el) {
   containerEl = el
+  containerEl.innerHTML = '<p class="loading-msg"><i class="fas fa-spinner fa-spin"></i> Cargando usuarios...</p>'
 
   try {
     const list = await fetchUsers()
@@ -73,50 +45,39 @@ export async function init(el) {
   renderList()
 }
 
-// ============================================================
-// 20.2 — renderList()
-// ============================================================
+// ── List ─────────────────────────────────────────────────────
 
-/**
- * Genera la tabla HTML de usuarios y la inyecta en containerEl.
- * Lee desde getState().users. NUNCA muestra el campo password.
- */
 export function renderList() {
   if (!containerEl) return
+  const list = getState().users
 
-  const users = getState().users
-
-  const rows = users.map(user => {
-    const badgeClass = user.active ? 'badge badge-active' : 'badge badge-inactive'
-    const badgeText = user.active ? 'Activo' : 'Inactivo'
-
-    // dateCreation puede ser un objeto { $date: "..." } o un string ISO
+  const rows = list.map(user => {
+    const badge = user.active
+      ? '<span class="badge badge-active">Activo</span>'
+      : '<span class="badge badge-inactive">Inactivo</span>'
     let dateStr = '—'
     if (user.dateCreation) {
       const raw = typeof user.dateCreation === 'object' && user.dateCreation.$date
-        ? user.dateCreation.$date
-        : user.dateCreation
+        ? user.dateCreation.$date : user.dateCreation
       dateStr = new Date(raw).toLocaleDateString('es-MX')
     }
-
-    return `
-      <tr>
-        <td>${escapeHtml(user.name)}</td>
-        <td>${escapeHtml(user.username)}</td>
-        <td>${escapeHtml(user.role)}</td>
-        <td><span class="${badgeClass}">${badgeText}</span></td>
-        <td>${dateStr}</td>
-        <td>
-          <button class="btn btn-sm btn-secondary btn-edit-user" data-id="${user._id}">
-            <i class="fas fa-pencil-alt"></i> Editar
-          </button>
-        </td>
-      </tr>`
+    return `<tr>
+      <td>${h(user.name)}</td>
+      <td>${h(user.username)}</td>
+      <td><span class="role-badge role-${h(user.role)}">${h(user.role)}</span></td>
+      <td>${badge}</td>
+      <td>${dateStr}</td>
+      <td class="td-actions">
+        <button class="btn-icon btn-edit" data-id="${h(user._id)}" title="Editar">
+          <i class="fas fa-pencil-alt"></i>
+        </button>
+      </td>
+    </tr>`
   }).join('')
 
   containerEl.innerHTML = `
     <div class="section-header">
-      <h2>Usuarios</h2>
+      <h2><i class="fas fa-users"></i> Usuarios</h2>
       <button class="btn btn-primary" id="btn-new-user">
         <i class="fas fa-plus"></i> Nuevo Usuario
       </button>
@@ -129,220 +90,147 @@ export function renderList() {
             <th>Username</th>
             <th>Rol</th>
             <th>Estado</th>
-            <th>Fecha de creación</th>
-            <th>Acciones</th>
+            <th>Fecha creación</th>
+            <th style="width:60px">Editar</th>
           </tr>
         </thead>
         <tbody>
-          ${rows.length ? rows : '<tr><td colspan="6" style="text-align:center;color:var(--text-light);padding:24px">Sin usuarios registrados</td></tr>'}
+          ${rows || '<tr><td colspan="6" class="table-empty">Sin usuarios registrados</td></tr>'}
         </tbody>
       </table>
     </div>`
 
   containerEl.querySelector('#btn-new-user').addEventListener('click', () => openForm())
 
-  containerEl.querySelectorAll('.btn-edit-user').forEach(btn => {
+  containerEl.querySelectorAll('.btn-edit').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id = btn.dataset.id
-      const item = getState().users.find(u => u._id === id)
+      const item = getState().users.find(u => u._id === btn.dataset.id)
       if (item) openForm(item)
     })
   })
 }
 
-// ============================================================
-// 20.3 — openForm(item?)
-// ============================================================
+// ── Form modal ────────────────────────────────────────────────
 
-/**
- * Renderiza el formulario de usuario (crear o editar).
- * En modo edición: pre-carga name, username, role, active; password SIEMPRE vacío.
- * dateCreation y createdBy se muestran como campos disabled en modo edición.
- * @param {object} [item] — usuario existente para editar; omitir para crear
- */
 export function openForm(item) {
-  if (!containerEl) return
+  const isEdit    = Boolean(item)
+  const activeVal = isEdit ? (item.active ? 'true' : 'false') : 'true'
 
-  const isEdit = Boolean(item)
-  const title = isEdit ? 'Editar Usuario' : 'Nuevo Usuario'
-
-  const activeSelected = isEdit ? (item.active ? 'true' : 'false') : 'true'
-
-  // Resolve dateCreation display value
-  let dateCreationDisplay = '—'
+  let dateDisplay = '—'
   if (isEdit && item.dateCreation) {
     const raw = typeof item.dateCreation === 'object' && item.dateCreation.$date
-      ? item.dateCreation.$date
-      : item.dateCreation
-    dateCreationDisplay = raw
+      ? item.dateCreation.$date : item.dateCreation
+    dateDisplay = raw
   }
 
-  // Read-only fields shown only in edit mode (Req 6.13)
-  const readonlyFields = isEdit ? `
-    <div class="form-group">
-      <label>Fecha de creación</label>
-      <input type="text" value="${escapeHtml(dateCreationDisplay)}" disabled>
-    </div>
-    <div class="form-group">
-      <label>Creado por</label>
-      <input type="text" value="${escapeHtml(item.createdBy || '—')}" disabled>
+  const metaFields = isEdit ? `
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha de creación</label>
+        <input type="text" value="${h(dateDisplay)}" disabled>
+      </div>
+      <div class="form-group">
+        <label>Creado por</label>
+        <input type="text" value="${h(item.createdBy || '—')}" disabled>
+      </div>
     </div>` : ''
 
-  containerEl.innerHTML = `
-    <div class="section-header">
-      <h2>${title}</h2>
-    </div>
-    <form class="admin-form" id="user-form" novalidate>
-      <h3>${title}</h3>
-
+  openModal(isEdit ? 'Editar Usuario' : 'Nuevo Usuario', `
+    <form id="user-form" novalidate>
       <div class="form-group">
-        <label for="user-name">Nombre <span style="color:var(--danger-color)">*</span></label>
-        <input
-          type="text"
-          id="user-name"
-          name="name"
-          value="${isEdit ? escapeHtml(item.name) : ''}"
-          placeholder="Nombre completo"
-          required
-        >
+        <label for="u-name">Nombre <span class="required">*</span></label>
+        <input type="text" id="u-name" name="name"
+          value="${isEdit ? h(item.name) : ''}"
+          placeholder="Nombre completo" autofocus>
       </div>
-
       <div class="form-group">
-        <label for="user-username">Username <span style="color:var(--danger-color)">*</span></label>
-        <input
-          type="text"
-          id="user-username"
-          name="username"
-          value="${isEdit ? escapeHtml(item.username) : ''}"
-          placeholder="Solo letras, números, guiones y guiones bajos"
-          required
-        >
+        <label for="u-username">Username <span class="required">*</span></label>
+        <input type="text" id="u-username" name="username"
+          value="${isEdit ? h(item.username) : ''}"
+          placeholder="Solo letras, números, - y _">
       </div>
-
       <div class="form-group">
-        <label for="user-role">Rol <span style="color:var(--danger-color)">*</span></label>
-        <select id="user-role" name="role" required>
+        <label for="u-role">Rol <span class="required">*</span></label>
+        <select id="u-role" name="role">
           <option value="">— Selecciona un rol —</option>
           <option value="admin"  ${isEdit && item.role === 'admin'  ? 'selected' : ''}>Admin</option>
           <option value="editor" ${isEdit && item.role === 'editor' ? 'selected' : ''}>Editor</option>
         </select>
       </div>
-
       <div class="form-group">
-        <label for="user-password">
-          Contraseña${isEdit ? ' <span style="color:var(--text-light);font-weight:normal">(dejar vacío para no cambiar)</span>' : ' <span style="color:var(--danger-color)">*</span>'}
+        <label for="u-pass">
+          Contraseña
+          ${isEdit
+            ? '<span class="label-hint"> — dejar vacío para no cambiar</span>'
+            : '<span class="required">*</span>'}
         </label>
-        <input
-          type="password"
-          id="user-password"
-          name="password"
-          value=""
-          placeholder="${isEdit ? 'Dejar vacío para mantener la contraseña actual' : 'Mínimo 6 caracteres'}"
-          ${isEdit ? '' : 'required'}
-          autocomplete="new-password"
-        >
+        <input type="password" id="u-pass" name="password" value=""
+          placeholder="${isEdit ? 'Dejar vacío para mantener' : 'Mínimo 6 caracteres'}"
+          autocomplete="new-password">
       </div>
-
       <div class="form-group">
-        <label for="user-active">Estado <span style="color:var(--danger-color)">*</span></label>
-        <select id="user-active" name="active">
-          <option value="true"  ${activeSelected === 'true'  ? 'selected' : ''}>Activo</option>
-          <option value="false" ${activeSelected === 'false' ? 'selected' : ''}>Inactivo</option>
+        <label for="u-active">Estado <span class="required">*</span></label>
+        <select id="u-active" name="active">
+          <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Activo</option>
+          <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactivo</option>
         </select>
       </div>
-
-      ${readonlyFields}
-
+      ${metaFields}
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">
-          <i class="fas fa-save"></i> Guardar
+          <i class="fas fa-save"></i> ${isEdit ? 'Actualizar' : 'Crear'}
         </button>
-        <button type="button" class="btn btn-secondary" id="btn-cancel-user">
+        <button type="button" class="btn btn-secondary" id="btn-cancel">
           <i class="fas fa-times"></i> Cancelar
         </button>
       </div>
-    </form>`
+    </form>`)
 
-  containerEl.querySelector('#btn-cancel-user').addEventListener('click', () => closeForm())
-
-  const form = containerEl.querySelector('#user-form')
-  form.addEventListener('submit', (e) => handleSubmit(e, item))
+  getModalBody().querySelector('#btn-cancel').addEventListener('click', closeModal)
+  getModalBody().querySelector('#user-form').addEventListener('submit', e => handleSubmit(e, item))
 }
 
-// ============================================================
-// closeForm
-// ============================================================
+// ── Submit ────────────────────────────────────────────────────
 
-/**
- * Cierra el formulario y vuelve a la lista.
- */
-export function closeForm() {
-  renderList()
-}
-
-// ============================================================
-// 20.4 — handleSubmit (form submit)
-// ============================================================
-
-/**
- * Maneja el envío del formulario de usuario.
- * Valida, llama a la API, actualiza state y re-renderiza.
- * Maneja el error 409 (username duplicado) con mensaje específico.
- * @param {SubmitEvent} e
- * @param {object|undefined} item — usuario existente (edición) o undefined (creación)
- */
 async function handleSubmit(e, item) {
   e.preventDefault()
-
   const isEdit = Boolean(item)
-  const form = e.target
-  const formData = new FormData(form)
-
-  const passwordRaw = formData.get('password') || ''
+  const form   = e.target
+  const fd     = new FormData(form)
+  const pass   = fd.get('password') || ''
 
   const data = {
-    name: formData.get('name'),
-    username: formData.get('username'),
-    role: formData.get('role'),
-    active: formData.get('active') === 'true',
+    name:     fd.get('name'),
+    username: fd.get('username'),
+    role:     fd.get('role'),
+    active:   fd.get('active') === 'true',
   }
+  if (pass.trim()) data.password = pass
 
-  // Only include password if provided (Req 6.7: omit to preserve existing hash)
-  if (passwordRaw.trim() !== '') {
-    data.password = passwordRaw
-  }
-
-  // Validación client-side (Req 7.1)
   const { valid, errors } = validateUser(data, isEdit)
-  if (!valid) {
-    applyErrors(form, errors)
-    return
-  }
-
+  if (!valid) { applyErrors(form, errors); return }
   applyErrors(form, {})
 
-  const submitBtn = form.querySelector('[type="submit"]')
-  submitBtn.disabled = true
+  const btn = form.querySelector('[type="submit"]')
+  btn.disabled = true
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'
 
   try {
-    let result
-    if (isEdit) {
-      result = await updateUser(item._id, data)
-    } else {
-      result = await createUser(data)
-    }
-
+    const result = isEdit
+      ? await updateUser(item._id, data)
+      : await createUser(data)
     upsertUser(result)
+    closeModal()
     renderList()
     showSuccess(isEdit ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente')
   } catch (err) {
     const msg = err.message || ''
-    // Req 6.6 / 8.4: specific message for duplicate username (409)
     if (msg.includes('409') || msg.toLowerCase().includes('username ya está en uso')) {
-      showError('El username ya está en uso. Por favor elige otro.')
+      showError('El username ya está en uso. Elige otro.')
     } else {
       showError(msg || 'Error al guardar el usuario')
     }
-    submitBtn.disabled = false
+    btn.disabled = false
+    btn.innerHTML = `<i class="fas fa-save"></i> ${isEdit ? 'Actualizar' : 'Crear'}`
   }
 }

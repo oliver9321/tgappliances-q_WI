@@ -7,8 +7,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: 'index.html',
-        admin: 'admin.html',
+        main:       'index.html',
+        admin:      'admin.html',
+        adminCats:  'admin-categories.html',
+        adminProds: 'admin-products.html',
+        adminUsers: 'admin-users.html',
       },
     },
   },

@@ -3,18 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Panel | TG Pre-Owned Appliances</title>
+  <title>Login | TG Admin</title>
   <meta name="robots" content="noindex, nofollow" />
-
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-  <!-- Admin styles -->
   <link rel="stylesheet" href="/admin.css" />
 </head>
 <body>
-
-  <!-- LOGIN SECTION (visible by default) -->
   <div id="login-section">
     <div class="login-card">
       <div class="login-logo">
@@ -24,11 +18,13 @@
       <form id="login-form" novalidate>
         <div class="form-group">
           <label for="login-username">Usuario</label>
-          <input type="text" id="login-username" name="username" autocomplete="username" required placeholder="Usuario" />
+          <input type="text" id="login-username" name="username"
+            autocomplete="username" required placeholder="Usuario" />
         </div>
         <div class="form-group">
           <label for="login-password">Contraseña</label>
-          <input type="password" id="login-password" name="password" autocomplete="current-password" required placeholder="Contraseña" />
+          <input type="password" id="login-password" name="password"
+            autocomplete="current-password" required placeholder="Contraseña" />
         </div>
         <div id="login-error" class="login-error" hidden></div>
         <button type="submit" class="btn btn-primary btn-block">
@@ -38,56 +34,35 @@
     </div>
   </div>
 
-  <!-- ADMIN PANEL (hidden by default, shown after login) -->
-  <div id="admin-panel" hidden>
+  <script type="module">
+    import { login, getSession, isAdmin } from '/src/admin/auth-login.js'
 
-    <header id="admin-header">
-      <div class="header-left">
-        <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
-          <i class="fas fa-bars"></i>
-        </button>
-        <a href="/admin.html" class="header-logo">
-          <img src="/logo2.png" alt="TG Pre-Owned Appliances" />
-        </a>
-        <span class="header-title">Admin Panel</span>
-      </div>
-      <div class="header-right">
-        <span id="nav-username" class="nav-username"></span>
-        <button id="logout-btn" class="btn btn-outline-light">
-          <i class="fas fa-sign-out-alt"></i> Cerrar sesión
-        </button>
-      </div>
-    </header>
+    // Already logged in → go straight to products
+    const session = getSession()
+    if (session && isAdmin(session)) {
+      window.location.href = '/admin-products.html'
+    }
 
-    <div class="admin-layout">
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const form = e.target
+      const username  = form.querySelector('[name="username"]').value.trim()
+      const password  = form.querySelector('[name="password"]').value
+      const errorEl   = document.getElementById('login-error')
+      const submitBtn = form.querySelector('[type="submit"]')
 
-      <aside id="admin-sidebar">
-        <nav class="sidebar-nav">
-          <button class="nav-item" data-section="categories">
-            <i class="fas fa-tags"></i>
-            <span>Categories</span>
-          </button>
-          <button class="nav-item" data-section="products">
-            <i class="fas fa-box"></i>
-            <span>Products</span>
-          </button>
-          <button class="nav-item" data-section="users">
-            <i class="fas fa-users"></i>
-            <span>Users</span>
-          </button>
-        </nav>
-      </aside>
+      submitBtn.disabled = true
+      errorEl.hidden = true
 
-      <main id="admin-main">
-        <section id="categories-section" class="admin-section" hidden></section>
-        <section id="products-section" class="admin-section" hidden></section>
-        <section id="users-section" class="admin-section" hidden></section>
-      </main>
-
-    </div>
-
-  </div>
-
-  <script type="module" src="/admin.js"></script>
+      try {
+        await login(username, password)
+        window.location.href = '/admin-products.html'
+      } catch (err) {
+        errorEl.textContent = err.message || 'Credenciales inválidas'
+        errorEl.hidden = false
+        submitBtn.disabled = false
+      }
+    })
+  </script>
 </body>
 </html>

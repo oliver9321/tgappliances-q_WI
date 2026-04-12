@@ -19,7 +19,7 @@ async function apiFetch(path, options = {}) {
 
   if (res.status === 401) {
     clearSession()
-    return
+    throw new Error('Sesión expirada. Redirigiendo al login...')
   }
 
   if (!res.ok) {
