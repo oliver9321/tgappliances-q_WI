@@ -6,41 +6,41 @@
   <title>Login | TG Admin</title>
   <meta name="robots" content="noindex, nofollow" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="stylesheet" href="/admin.css" />
+  <link rel="stylesheet" href="./admin.css" />
 </head>
-<body>
-  <div id="login-section">
-    <div class="login-card">
-      <div class="login-logo">
-        <img src="/logo2.png" alt="TG Pre-Owned Appliances" />
+<body class="login-body">
+
+  <div class="d-flex align-items-center justify-content-center min-vh-100 p-3">
+    <div class="login-card card shadow-lg p-4" style="width:100%;max-width:400px;">
+      <div class="text-center mb-4">
+        <img src="/logo2.png" alt="TG Pre-Owned Appliances" style="height:70px;width:auto;" />
+        <h1 class="h4 fw-bold mt-3 mb-0">Admin Panel</h1>
       </div>
-      <h1>Admin Panel</h1>
       <form id="login-form" novalidate>
-        <div class="form-group">
-          <label for="login-username">Usuario</label>
-          <input type="text" id="login-username" name="username"
+        <div class="mb-3">
+          <label for="login-username" class="form-label fw-semibold">Usuario</label>
+          <input type="text" id="login-username" name="username" class="form-control"
             autocomplete="username" required placeholder="Usuario" />
         </div>
-        <div class="form-group">
-          <label for="login-password">Contraseña</label>
-          <input type="password" id="login-password" name="password"
+        <div class="mb-3">
+          <label for="login-password" class="form-label fw-semibold">Contraseña</label>
+          <input type="password" id="login-password" name="password" class="form-control"
             autocomplete="current-password" required placeholder="Contraseña" />
         </div>
-        <div id="login-error" class="login-error" hidden></div>
-        <button type="submit" class="btn btn-primary btn-block">
-          <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+        <div id="login-error" class="alert alert-danger py-2 small" hidden></div>
+        <button type="submit" class="btn btn-danger w-100 mt-1">
+          <i class="fas fa-sign-in-alt me-1"></i> Iniciar sesión
         </button>
       </form>
     </div>
   </div>
 
   <script type="module">
-    import { login, getSession, isAdmin } from '/src/admin/auth-login.js'
+    import { login, getSession, isAdmin } from './auth-login.js'
 
-    // Already logged in → go straight to products
     const session = getSession()
     if (session && isAdmin(session)) {
-      window.location.href = '/admin-products.html'
+      window.location.href = '/admin/products.html'
     }
 
     document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -56,7 +56,7 @@
 
       try {
         await login(username, password)
-        window.location.href = '/admin-products.html'
+        window.location.href = '/admin/products.html'
       } catch (err) {
         errorEl.textContent = err.message || 'Credenciales inválidas'
         errorEl.hidden = false

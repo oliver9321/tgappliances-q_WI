@@ -26,7 +26,7 @@ export function setSession(data) {
  */
 export function clearSession() {
   sessionStorage.removeItem(SESSION_KEY)
-  window.location.href = '/admin.html'
+  window.location.href = '/admin/index.html'
 }
 
 /**

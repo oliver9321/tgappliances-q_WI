@@ -6,8 +6,6 @@ import { openModal, closeModal, getModalBody } from '../modal.js'
 
 let containerEl = null
 
-// ── Helpers ──────────────────────────────────────────────────
-
 function h(str) {
   if (str == null) return ''
   return String(str)
@@ -17,23 +15,24 @@ function h(str) {
 
 function applyErrors(form, errors) {
   form.querySelectorAll('.field-error').forEach(el => el.remove())
-  form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'))
+  form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'))
   Object.entries(errors).forEach(([field, msg]) => {
     const input = form.querySelector(`[name="${field}"]`)
     if (!input) return
-    input.classList.add('input-error')
+    input.classList.add('is-invalid')
     const span = document.createElement('span')
-    span.className = 'field-error'
+    span.className = 'field-error invalid-feedback d-block'
     span.textContent = msg
     input.insertAdjacentElement('afterend', span)
   })
 }
 
-// ── Init ─────────────────────────────────────────────────────
-
 export async function init(el) {
   containerEl = el
-  containerEl.innerHTML = '<p class="loading-msg"><i class="fas fa-spinner fa-spin"></i> Cargando usuarios...</p>'
+  containerEl.innerHTML = `
+    <div class="d-flex align-items-center gap-2 text-muted p-4">
+      <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
+    </div>`
 
   try {
     const list = await fetchUsers()
@@ -45,16 +44,14 @@ export async function init(el) {
   renderList()
 }
 
-// ── List ─────────────────────────────────────────────────────
-
 export function renderList() {
   if (!containerEl) return
   const list = getState().users
 
   const rows = list.map(user => {
     const badge = user.active
-      ? '<span class="badge badge-active">Activo</span>'
-      : '<span class="badge badge-inactive">Inactivo</span>'
+      ? '<span class="badge bg-success">Activo</span>'
+      : '<span class="badge bg-danger">Inactivo</span>'
     let dateStr = '—'
     if (user.dateCreation) {
       const raw = typeof user.dateCreation === 'object' && user.dateCreation.$date
@@ -67,8 +64,8 @@ export function renderList() {
       <td><span class="role-badge role-${h(user.role)}">${h(user.role)}</span></td>
       <td>${badge}</td>
       <td>${dateStr}</td>
-      <td class="td-actions">
-        <button class="btn-icon btn-edit" data-id="${h(user._id)}" title="Editar">
+      <td class="text-center">
+        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${h(user._id)}" title="Editar">
           <i class="fas fa-pencil-alt"></i>
         </button>
       </td>
@@ -77,31 +74,32 @@ export function renderList() {
 
   containerEl.innerHTML = `
     <div class="section-header">
-      <h2><i class="fas fa-users"></i> Usuarios</h2>
-      <button class="btn btn-primary" id="btn-new-user">
-        <i class="fas fa-plus"></i> Nuevo Usuario
+      <h2 class="h5 fw-bold mb-0"><i class="fas fa-users me-2"></i>Usuarios</h2>
+      <button class="btn btn-danger btn-sm" id="btn-new-user">
+        <i class="fas fa-plus me-1"></i> Nuevo Usuario
       </button>
     </div>
-    <div class="admin-table-wrapper">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Username</th>
-            <th>Rol</th>
-            <th>Estado</th>
-            <th>Fecha creación</th>
-            <th style="width:60px">Editar</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows || '<tr><td colspan="6" class="table-empty">Sin usuarios registrados</td></tr>'}
-        </tbody>
-      </table>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>Nombre</th>
+              <th>Username</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Fecha creación</th>
+              <th style="width:70px">Editar</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || '<tr><td colspan="6" class="text-center text-muted py-4">Sin usuarios registrados</td></tr>'}
+          </tbody>
+        </table>
+      </div>
     </div>`
 
   containerEl.querySelector('#btn-new-user').addEventListener('click', () => openForm())
-
   containerEl.querySelectorAll('.btn-edit').forEach(btn => {
     btn.addEventListener('click', () => {
       const item = getState().users.find(u => u._id === btn.dataset.id)
@@ -109,8 +107,6 @@ export function renderList() {
     })
   })
 }
-
-// ── Form modal ────────────────────────────────────────────────
 
 export function openForm(item) {
   const isEdit    = Boolean(item)
@@ -124,64 +120,62 @@ export function openForm(item) {
   }
 
   const metaFields = isEdit ? `
-    <div class="form-row">
-      <div class="form-group">
-        <label>Fecha de creación</label>
-        <input type="text" value="${h(dateDisplay)}" disabled>
+    <div class="row g-3 mt-1">
+      <div class="col-sm-6">
+        <label class="form-label fw-semibold">Fecha de creación</label>
+        <input type="text" class="form-control" value="${h(dateDisplay)}" disabled>
       </div>
-      <div class="form-group">
-        <label>Creado por</label>
-        <input type="text" value="${h(item.createdBy || '—')}" disabled>
+      <div class="col-sm-6">
+        <label class="form-label fw-semibold">Creado por</label>
+        <input type="text" class="form-control" value="${h(item.createdBy || '—')}" disabled>
       </div>
     </div>` : ''
 
   openModal(isEdit ? 'Editar Usuario' : 'Nuevo Usuario', `
     <form id="user-form" novalidate>
-      <div class="form-group">
-        <label for="u-name">Nombre <span class="required">*</span></label>
-        <input type="text" id="u-name" name="name"
-          value="${isEdit ? h(item.name) : ''}"
-          placeholder="Nombre completo" autofocus>
+      <div class="mb-3">
+        <label for="u-name" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+        <input type="text" id="u-name" name="name" class="form-control"
+          value="${isEdit ? h(item.name) : ''}" placeholder="Nombre completo" autofocus>
       </div>
-      <div class="form-group">
-        <label for="u-username">Username <span class="required">*</span></label>
-        <input type="text" id="u-username" name="username"
-          value="${isEdit ? h(item.username) : ''}"
-          placeholder="Solo letras, números, - y _">
+      <div class="mb-3">
+        <label for="u-username" class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+        <input type="text" id="u-username" name="username" class="form-control"
+          value="${isEdit ? h(item.username) : ''}" placeholder="Solo letras, números, - y _">
       </div>
-      <div class="form-group">
-        <label for="u-role">Rol <span class="required">*</span></label>
-        <select id="u-role" name="role">
+      <div class="mb-3">
+        <label for="u-role" class="form-label fw-semibold">Rol <span class="text-danger">*</span></label>
+        <select id="u-role" name="role" class="form-select">
           <option value="">— Selecciona un rol —</option>
           <option value="admin"  ${isEdit && item.role === 'admin'  ? 'selected' : ''}>Admin</option>
           <option value="editor" ${isEdit && item.role === 'editor' ? 'selected' : ''}>Editor</option>
         </select>
       </div>
-      <div class="form-group">
-        <label for="u-pass">
+      <div class="mb-3">
+        <label for="u-pass" class="form-label fw-semibold">
           Contraseña
           ${isEdit
-            ? '<span class="label-hint"> — dejar vacío para no cambiar</span>'
-            : '<span class="required">*</span>'}
+            ? '<span class="text-muted fw-normal small"> — dejar vacío para no cambiar</span>'
+            : '<span class="text-danger">*</span>'}
         </label>
-        <input type="password" id="u-pass" name="password" value=""
+        <input type="password" id="u-pass" name="password" class="form-control" value=""
           placeholder="${isEdit ? 'Dejar vacío para mantener' : 'Mínimo 6 caracteres'}"
           autocomplete="new-password">
       </div>
-      <div class="form-group">
-        <label for="u-active">Estado <span class="required">*</span></label>
-        <select id="u-active" name="active">
+      <div class="mb-3">
+        <label for="u-active" class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+        <select id="u-active" name="active" class="form-select">
           <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Activo</option>
           <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactivo</option>
         </select>
       </div>
       ${metaFields}
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-save"></i> ${isEdit ? 'Actualizar' : 'Crear'}
+      <div class="d-flex gap-2 mt-4 pt-3 border-top">
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-save me-1"></i> ${isEdit ? 'Actualizar' : 'Crear'}
         </button>
         <button type="button" class="btn btn-secondary" id="btn-cancel">
-          <i class="fas fa-times"></i> Cancelar
+          <i class="fas fa-times me-1"></i> Cancelar
         </button>
       </div>
     </form>`)
@@ -189,8 +183,6 @@ export function openForm(item) {
   getModalBody().querySelector('#btn-cancel').addEventListener('click', closeModal)
   getModalBody().querySelector('#user-form').addEventListener('submit', e => handleSubmit(e, item))
 }
-
-// ── Submit ────────────────────────────────────────────────────
 
 async function handleSubmit(e, item) {
   e.preventDefault()
@@ -213,7 +205,7 @@ async function handleSubmit(e, item) {
 
   const btn = form.querySelector('[type="submit"]')
   btn.disabled = true
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'
 
   try {
     const result = isEdit
@@ -231,6 +223,6 @@ async function handleSubmit(e, item) {
       showError(msg || 'Error al guardar el usuario')
     }
     btn.disabled = false
-    btn.innerHTML = `<i class="fas fa-save"></i> ${isEdit ? 'Actualizar' : 'Crear'}`
+    btn.innerHTML = `<i class="fas fa-save me-1"></i> ${isEdit ? 'Actualizar' : 'Crear'}`
   }
 }

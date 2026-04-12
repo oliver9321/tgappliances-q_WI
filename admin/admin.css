@@ -1,0 +1,215 @@
+/* ============================================================
+   admin.css — TG Admin Panel
+   Bootstrap 5 handles base styles; this file adds layout,
+   sidebar, and custom tokens only.
+   ============================================================ */
+
+/* Bootstrap loaded via JS import in page scripts */
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+/* --- Custom tokens --- */
+:root {
+  --sidebar-width: 240px;
+  --header-height: 56px;
+  --sidebar-bg: #1e2a35;
+  --sidebar-text: rgba(255,255,255,0.82);
+  --sidebar-hover: rgba(255,255,255,0.08);
+  --sidebar-active-bg: rgba(128,0,32,0.28);
+  --sidebar-active-border: #800020;
+  --admin-navbar-bg: #800020;
+}
+
+/* ── Login page ── */
+.login-body {
+  background: linear-gradient(135deg, #2c3e50 0%, #1e2a35 100%);
+}
+
+/* ── Top navbar ── */
+.admin-navbar {
+  height: var(--header-height);
+  background: var(--admin-navbar-bg) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  z-index: 1030;
+}
+
+/* ── Layout wrapper ── */
+.admin-wrapper {
+  display: flex;
+  margin-top: var(--header-height);
+  min-height: calc(100vh - var(--header-height));
+}
+
+/* ── Sidebar ── */
+#admin-sidebar {
+  width: var(--sidebar-width);
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  z-index: 1020;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 22px;
+  color: var(--sidebar-text);
+  font-size: 0.92rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+  transition: background 0.2s, color 0.2s;
+}
+
+.nav-item i { width: 18px; text-align: center; flex-shrink: 0; }
+
+.nav-item:hover {
+  background: var(--sidebar-hover);
+  color: #fff;
+}
+
+.nav-item.active {
+  background: var(--sidebar-active-bg);
+  color: #fff;
+  border-left-color: var(--sidebar-active-border);
+}
+
+/* ── Main content ── */
+#admin-main {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  padding: 28px 32px;
+  background: #f4f6f8;
+  min-height: calc(100vh - var(--header-height));
+}
+
+/* ── Section header ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* ── Table thumbnail ── */
+.table-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.no-image {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: #e9ecef;
+  border-radius: 5px;
+  color: #adb5bd;
+}
+
+/* ── Role badges ── */
+.role-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.role-admin  { background: #fde8e8; color: #800020; }
+.role-editor { background: #e8f4fd; color: #1a6fa8; }
+
+/* ── Validation ── */
+.field-error {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.8rem;
+  color: #dc3545;
+  font-weight: 500;
+}
+.field-hint {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+/* ── Toast container ── */
+#toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 280px;
+  max-width: 380px;
+  padding: 14px 16px;
+  border-radius: 7px;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  pointer-events: auto;
+  animation: toastIn 0.3s ease forwards;
+}
+.toast-msg.toast-hide { animation: toastOut 0.3s ease forwards; }
+.toast-success { background: #27ae60; }
+.toast-error   { background: #dc3545; }
+.toast-info    { background: #2980b9; }
+
+@keyframes toastIn  { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+@keyframes toastOut { from { opacity:1; transform:translateX(0); } to { opacity:0; transform:translateX(40px); } }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  #admin-sidebar {
+    transform: translateX(-100%);
+  }
+  body.sidebar-open #admin-sidebar {
+    transform: translateX(0);
+  }
+  body.sidebar-open::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1010;
+  }
+  #admin-main {
+    margin-left: 0;
+    padding: 20px 16px;
+  }
+  #toast-container {
+    bottom: 16px;
+    right: 12px;
+    left: 12px;
+  }
+  .toast-msg { min-width: unset; max-width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .admin-navbar { padding: 0 12px !important; }
+}

@@ -38,8 +38,10 @@ export async function login(req, res) {
       role: user.role,
       token,
     })
+    
   } catch (err) {
-    return res.status(500).json({ message: 'Error interno del servidor' })
+    console.error('[login]', err)
+    return res.status(500).json({ message: 'Error interno del servidor', detail: err.message })
   }
 }
 
@@ -77,9 +79,10 @@ export async function setup(req, res) {
 
     return res.status(201).json({ message: 'Usuario admin creado correctamente', user: result })
   } catch (err) {
+    console.error('[setup]', err)
     if (err.code === 11000) {
       return res.status(409).json({ message: 'El username ya está en uso' })
     }
-    return res.status(500).json({ message: 'Error interno del servidor' })
+    return res.status(500).json({ message: 'Error interno del servidor', detail: err.message })
   }
 }

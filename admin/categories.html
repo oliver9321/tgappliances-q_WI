@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Categorías | TG Admin</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="./admin.css" />
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar navbar-dark admin-navbar px-3 fixed-top">
+    <div class="d-flex align-items-center gap-3">
+      <button id="sidebar-toggle" class="btn btn-link text-white p-0 sidebar-toggle" aria-label="Toggle sidebar">
+        <i class="fas fa-bars fs-5"></i>
+      </button>
+      <a href="/admin/products.html" class="navbar-brand p-0 m-0">
+        <img src="/logo2.png" alt="TG Admin" style="height:36px;width:auto;" />
+      </a>
+      <span class="text-white fw-semibold d-none d-sm-inline">Admin Panel</span>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <span id="nav-username" class="text-white small d-none d-md-inline"></span>
+      <button id="logout-btn" class="btn btn-outline-light btn-sm">
+        <i class="fas fa-sign-out-alt me-1"></i> Salir
+      </button>
+    </div>
+  </nav>
+
+  <div class="admin-wrapper">
+    <!-- Sidebar -->
+    <aside id="admin-sidebar">
+      <nav class="sidebar-nav pt-2">
+        <a class="nav-item" data-page="categories" href="/admin/categories.html">
+          <i class="fas fa-tags"></i><span>Categorías</span>
+        </a>
+        <a class="nav-item" data-page="products" href="/admin/products.html">
+          <i class="fas fa-box"></i><span>Productos</span>
+        </a>
+        <a class="nav-item" data-page="users" href="/admin/users.html">
+          <i class="fas fa-users"></i><span>Usuarios</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main id="admin-main">
+      <div id="page-content" class="container-fluid px-0"></div>
+    </main>
+  </div>
+
+  <!-- Bootstrap Modal -->
+  <div class="modal fade" id="adminModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modal-title"></h5>
+          <button type="button" class="btn-close" id="modal-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./pages/categories-page.js"></script>
+</body>
+</html>

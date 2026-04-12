@@ -1,4 +1,5 @@
 import "./style.css";
+import { initCatalog } from './catalog.js';
 
 let currentSlide = 0;
 let slideInterval;
@@ -309,4 +310,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initActiveNavLink();
   initContactForm();
   initFooterYear();
+  initCatalog();
 });

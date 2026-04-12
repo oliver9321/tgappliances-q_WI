@@ -17,12 +17,9 @@ function getContainer() {
 
 function createToast(message, typeClass, iconClass) {
   const toast = document.createElement('div')
-  toast.className = `toast ${typeClass}`
+  toast.className = `toast-msg ${typeClass}`
   toast.innerHTML = `<i class="${iconClass}"></i><span>${message}</span>`
-
-  const container = getContainer()
-  container.appendChild(toast)
-
+  getContainer().appendChild(toast)
   setTimeout(() => {
     toast.classList.add('toast-hide')
     setTimeout(() => toast.remove(), ANIMATION_DURATION)

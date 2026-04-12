@@ -2,6 +2,7 @@
  * layout.js — Shared bootstrap for admin module pages.
  * Guards session, injects username, wires logout + sidebar toggle.
  */
+import 'bootstrap'
 import { getSession, isAdmin, clearSession } from './auth.js'
 
 export function initLayout(activeSection) {
@@ -9,7 +10,7 @@ export function initLayout(activeSection) {
 
   // Guard: no valid session → back to login
   if (!session || !isAdmin(session)) {
-    window.location.href = '/admin.html'
+    window.location.href = '/admin/index.html'
     return null
   }
 

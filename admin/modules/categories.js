@@ -6,8 +6,6 @@ import { openModal, closeModal, getModalBody } from '../modal.js'
 
 let containerEl = null
 
-// ── Helpers ──────────────────────────────────────────────────
-
 function h(str) {
   if (str == null) return ''
   return String(str)
@@ -17,23 +15,24 @@ function h(str) {
 
 function applyErrors(form, errors) {
   form.querySelectorAll('.field-error').forEach(el => el.remove())
-  form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'))
+  form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'))
   Object.entries(errors).forEach(([field, msg]) => {
     const input = form.querySelector(`[name="${field}"]`)
     if (!input) return
-    input.classList.add('input-error')
+    input.classList.add('is-invalid')
     const span = document.createElement('span')
-    span.className = 'field-error'
+    span.className = 'field-error invalid-feedback d-block'
     span.textContent = msg
     input.insertAdjacentElement('afterend', span)
   })
 }
 
-// ── Init ─────────────────────────────────────────────────────
-
 export async function init(el) {
   containerEl = el
-  containerEl.innerHTML = '<p class="loading-msg"><i class="fas fa-spinner fa-spin"></i> Cargando categorías...</p>'
+  containerEl.innerHTML = `
+    <div class="d-flex align-items-center gap-2 text-muted p-4">
+      <i class="fas fa-spinner fa-spin"></i> Cargando categorías...
+    </div>`
 
   try {
     const list = await fetchCategories()
@@ -42,11 +41,8 @@ export async function init(el) {
     showError(err.message || 'Error al cargar las categorías')
   }
 
-  // Always render the table, even if fetch failed (shows empty state)
   renderList()
 }
-
-// ── List ─────────────────────────────────────────────────────
 
 export function renderList() {
   if (!containerEl) return
@@ -54,8 +50,8 @@ export function renderList() {
 
   const rows = list.map(cat => {
     const badge = cat.active
-      ? '<span class="badge badge-active">Activo</span>'
-      : '<span class="badge badge-inactive">Inactivo</span>'
+      ? '<span class="badge bg-success">Activo</span>'
+      : '<span class="badge bg-danger">Inactivo</span>'
     const date = cat.dateCreation
       ? new Date(cat.dateCreation).toLocaleDateString('es-MX') : '—'
     return `<tr>
@@ -63,8 +59,8 @@ export function renderList() {
       <td>${h(cat.description || '—')}</td>
       <td>${badge}</td>
       <td>${date}</td>
-      <td class="td-actions">
-        <button class="btn-icon btn-edit" data-id="${h(cat._id)}" title="Editar">
+      <td class="text-center">
+        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${h(cat._id)}" title="Editar">
           <i class="fas fa-pencil-alt"></i>
         </button>
       </td>
@@ -73,30 +69,31 @@ export function renderList() {
 
   containerEl.innerHTML = `
     <div class="section-header">
-      <h2><i class="fas fa-tags"></i> Categorías</h2>
-      <button class="btn btn-primary" id="btn-new-cat">
-        <i class="fas fa-plus"></i> Nueva Categoría
+      <h2 class="h5 fw-bold mb-0"><i class="fas fa-tags me-2"></i>Categorías</h2>
+      <button class="btn btn-danger btn-sm" id="btn-new-cat">
+        <i class="fas fa-plus me-1"></i> Nueva Categoría
       </button>
     </div>
-    <div class="admin-table-wrapper">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Estado</th>
-            <th>Fecha creación</th>
-            <th style="width:60px">Editar</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows || '<tr><td colspan="5" class="table-empty">Sin categorías registradas</td></tr>'}
-        </tbody>
-      </table>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th>Fecha creación</th>
+              <th style="width:70px">Editar</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || '<tr><td colspan="5" class="text-center text-muted py-4">Sin categorías registradas</td></tr>'}
+          </tbody>
+        </table>
+      </div>
     </div>`
 
   containerEl.querySelector('#btn-new-cat').addEventListener('click', () => openForm())
-
   containerEl.querySelectorAll('.btn-edit').forEach(btn => {
     btn.addEventListener('click', () => {
       const item = getState().categories.find(c => c._id === btn.dataset.id)
@@ -105,51 +102,48 @@ export function renderList() {
   })
 }
 
-// ── Form modal ────────────────────────────────────────────────
-
 export function openForm(item) {
   const isEdit = Boolean(item)
   const activeVal = isEdit ? (item.active ? 'true' : 'false') : 'true'
 
   const metaFields = isEdit ? `
-    <div class="form-row">
-      <div class="form-group">
-        <label>Fecha de creación</label>
-        <input type="text" value="${h(item.dateCreation || '—')}" disabled>
+    <div class="row g-3">
+      <div class="col-sm-6">
+        <label class="form-label fw-semibold">Fecha de creación</label>
+        <input type="text" class="form-control" value="${h(item.dateCreation || '—')}" disabled>
       </div>
-      <div class="form-group">
-        <label>Creado por</label>
-        <input type="text" value="${h(item.createdBy || '—')}" disabled>
+      <div class="col-sm-6">
+        <label class="form-label fw-semibold">Creado por</label>
+        <input type="text" class="form-control" value="${h(item.createdBy || '—')}" disabled>
       </div>
     </div>` : ''
 
   openModal(isEdit ? 'Editar Categoría' : 'Nueva Categoría', `
     <form id="cat-form" novalidate>
-      <div class="form-group">
-        <label for="cat-name">Nombre <span class="required">*</span></label>
-        <input type="text" id="cat-name" name="name"
-          value="${isEdit ? h(item.name) : ''}"
-          placeholder="Nombre de la categoría" autofocus>
+      <div class="mb-3">
+        <label for="cat-name" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+        <input type="text" id="cat-name" name="name" class="form-control"
+          value="${isEdit ? h(item.name) : ''}" placeholder="Nombre de la categoría" autofocus>
       </div>
-      <div class="form-group">
-        <label for="cat-desc">Descripción</label>
-        <textarea id="cat-desc" name="description"
+      <div class="mb-3">
+        <label for="cat-desc" class="form-label fw-semibold">Descripción</label>
+        <textarea id="cat-desc" name="description" class="form-control" rows="3"
           placeholder="Descripción opcional">${isEdit ? h(item.description || '') : ''}</textarea>
       </div>
-      <div class="form-group">
-        <label for="cat-active">Estado <span class="required">*</span></label>
-        <select id="cat-active" name="active">
+      <div class="mb-3">
+        <label for="cat-active" class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+        <select id="cat-active" name="active" class="form-select">
           <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Activo</option>
           <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactivo</option>
         </select>
       </div>
       ${metaFields}
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-save"></i> ${isEdit ? 'Actualizar' : 'Crear'}
+      <div class="d-flex gap-2 mt-4 pt-3 border-top">
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-save me-1"></i> ${isEdit ? 'Actualizar' : 'Crear'}
         </button>
         <button type="button" class="btn btn-secondary" id="btn-cancel">
-          <i class="fas fa-times"></i> Cancelar
+          <i class="fas fa-times me-1"></i> Cancelar
         </button>
       </div>
     </form>`)
@@ -157,8 +151,6 @@ export function openForm(item) {
   getModalBody().querySelector('#btn-cancel').addEventListener('click', closeModal)
   getModalBody().querySelector('#cat-form').addEventListener('submit', e => handleSubmit(e, item))
 }
-
-// ── Submit ────────────────────────────────────────────────────
 
 async function handleSubmit(e, item) {
   e.preventDefault()
@@ -176,7 +168,7 @@ async function handleSubmit(e, item) {
 
   const btn = form.querySelector('[type="submit"]')
   btn.disabled = true
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'
 
   try {
     const result = item
@@ -189,6 +181,6 @@ async function handleSubmit(e, item) {
   } catch (err) {
     showError(err.message || 'Error al guardar la categoría')
     btn.disabled = false
-    btn.innerHTML = `<i class="fas fa-save"></i> ${item ? 'Actualizar' : 'Crear'}`
+    btn.innerHTML = `<i class="fas fa-save me-1"></i> ${item ? 'Actualizar' : 'Crear'}`
   }
 }

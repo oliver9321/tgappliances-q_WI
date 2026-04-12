@@ -9,8 +9,6 @@ let containerEl = null
 let imageUrl = ''
 let galleryUrls = []
 
-// ── Helpers ──────────────────────────────────────────────────
-
 function h(str) {
   if (str == null) return ''
   return String(str)
@@ -20,28 +18,24 @@ function h(str) {
 
 function applyErrors(form, errors) {
   form.querySelectorAll('.field-error').forEach(el => el.remove())
-  form.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'))
+  form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'))
   Object.entries(errors).forEach(([field, msg]) => {
     const input = form.querySelector(`[name="${field}"]`)
     if (!input) return
-    input.classList.add('input-error')
+    input.classList.add('is-invalid')
     const span = document.createElement('span')
-    span.className = 'field-error'
+    span.className = 'field-error invalid-feedback d-block'
     span.textContent = msg
     input.insertAdjacentElement('afterend', span)
   })
 }
 
-function resolveCategoryName(id) {
-  const cat = getState().categories.find(c => c._id === id)
-  return cat ? cat.name : '—'
-}
-
-// ── Init ─────────────────────────────────────────────────────
-
 export async function init(el) {
   containerEl = el
-  containerEl.innerHTML = '<p class="loading-msg"><i class="fas fa-spinner fa-spin"></i> Cargando productos...</p>'
+  containerEl.innerHTML = `
+    <div class="d-flex align-items-center gap-2 text-muted p-4">
+      <i class="fas fa-spinner fa-spin"></i> Cargando productos...
+    </div>`
 
   try {
     const [cats, prods] = await Promise.all([fetchCategories(), fetchProducts()])
@@ -54,17 +48,14 @@ export async function init(el) {
   renderList()
 }
 
-// ── List ─────────────────────────────────────────────────────
-
 export function renderList() {
   if (!containerEl) return
   const list = getState().products
 
   const rows = list.map(prod => {
-    const catName = resolveCategoryName(prod.category)
     const badge = prod.active
-      ? '<span class="badge badge-active">Activo</span>'
-      : '<span class="badge badge-inactive">Inactivo</span>'
+      ? '<span class="badge bg-success">Activo</span>'
+      : '<span class="badge bg-danger">Inactivo</span>'
     const date  = prod.dateCreation ? new Date(prod.dateCreation).toLocaleDateString('es-MX') : '—'
     const price = prod.price != null ? `$${Number(prod.price).toFixed(2)}` : '—'
     const thumb = prod.image
@@ -74,12 +65,12 @@ export function renderList() {
     return `<tr>
       <td>${thumb}</td>
       <td>${h(prod.title)}</td>
-      <td>${h(catName)}</td>
+      <td>${h(prod.category)}</td>
       <td>${price}</td>
       <td>${badge}</td>
       <td>${date}</td>
-      <td class="td-actions">
-        <button class="btn-icon btn-edit" data-id="${h(prod._id)}" title="Editar">
+      <td class="text-center">
+        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${h(prod._id)}" title="Editar">
           <i class="fas fa-pencil-alt"></i>
         </button>
       </td>
@@ -88,32 +79,33 @@ export function renderList() {
 
   containerEl.innerHTML = `
     <div class="section-header">
-      <h2><i class="fas fa-box"></i> Productos</h2>
-      <button class="btn btn-primary" id="btn-new-prod">
-        <i class="fas fa-plus"></i> Nuevo Producto
+      <h2 class="h5 fw-bold mb-0"><i class="fas fa-box me-2"></i>Productos</h2>
+      <button class="btn btn-danger btn-sm" id="btn-new-prod">
+        <i class="fas fa-plus me-1"></i> Nuevo Producto
       </button>
     </div>
-    <div class="admin-table-wrapper">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th style="width:56px">Img</th>
-            <th>Título</th>
-            <th>Categoría</th>
-            <th>Precio</th>
-            <th>Estado</th>
-            <th>Fecha creación</th>
-            <th style="width:60px">Editar</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows || '<tr><td colspan="7" class="table-empty">Sin productos registrados</td></tr>'}
-        </tbody>
-      </table>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th style="width:56px">Img</th>
+              <th>Título</th>
+              <th>Categoría</th>
+              <th>Precio</th>
+              <th>Estado</th>
+              <th>Fecha creación</th>
+              <th style="width:70px">Editar</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || '<tr><td colspan="7" class="text-center text-muted py-4">Sin productos registrados</td></tr>'}
+          </tbody>
+        </table>
+      </div>
     </div>`
 
   containerEl.querySelector('#btn-new-prod').addEventListener('click', () => openForm())
-
   containerEl.querySelectorAll('.btn-edit').forEach(btn => {
     btn.addEventListener('click', () => {
       const item = getState().products.find(p => p._id === btn.dataset.id)
@@ -121,8 +113,6 @@ export function renderList() {
     })
   })
 }
-
-// ── Form modal ────────────────────────────────────────────────
 
 export function openForm(item) {
   imageUrl    = item?.image   || ''
@@ -132,99 +122,96 @@ export function openForm(item) {
   const activeVal = isEdit ? (item.active ? 'true' : 'false') : 'true'
   const activeCats = getState().categories.filter(c => c.active)
   const catOptions = activeCats.map(cat => {
-    const sel = isEdit && item.category === cat._id ? 'selected' : ''
-    return `<option value="${h(cat._id)}" ${sel}>${h(cat.name)}</option>`
+    const sel = isEdit && item.category === cat.name ? 'selected' : ''
+    return `<option value="${h(cat.name)}" ${sel}>${h(cat.name)}</option>`
   }).join('')
 
   const metaFields = isEdit ? `
-    <div class="form-row">
-      <div class="form-group">
-        <label>Fecha de creación</label>
-        <input type="text" value="${h(item.dateCreation || '—')}" disabled>
+    <div class="row g-3 mt-1">
+      <div class="col-sm-6">
+        <label class="form-label fw-semibold">Fecha de creación</label>
+        <input type="text" class="form-control" value="${h(item.dateCreation || '—')}" disabled>
       </div>
-      <div class="form-group">
-        <label>Creado por</label>
-        <input type="text" value="${h(item.createdBy || '—')}" disabled>
+      <div class="col-sm-6">
+        <label class="form-label fw-semibold">Creado por</label>
+        <input type="text" class="form-control" value="${h(item.createdBy || '—')}" disabled>
       </div>
     </div>` : ''
 
   openModal(isEdit ? 'Editar Producto' : 'Nuevo Producto', `
     <form id="prod-form" novalidate>
-      <div class="form-group">
-        <label for="p-cat">Categoría <span class="required">*</span></label>
-        <select id="p-cat" name="category" required>
+      <div class="mb-3">
+        <label for="p-cat" class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
+        <select id="p-cat" name="category" class="form-select" required>
           <option value="">— Selecciona una categoría —</option>
           ${catOptions}
         </select>
       </div>
-      <div class="form-group">
-        <label for="p-title">Título <span class="required">*</span></label>
-        <input type="text" id="p-title" name="title"
-          value="${isEdit ? h(item.title) : ''}"
-          placeholder="Título del producto" autofocus>
+      <div class="mb-3">
+        <label for="p-title" class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+        <input type="text" id="p-title" name="title" class="form-control"
+          value="${isEdit ? h(item.title) : ''}" placeholder="Título del producto" autofocus>
       </div>
-      <div class="form-group">
-        <label for="p-desc">Descripción</label>
-        <textarea id="p-desc" name="description"
+      <div class="mb-3">
+        <label for="p-desc" class="form-label fw-semibold">Descripción</label>
+        <textarea id="p-desc" name="description" class="form-control" rows="3"
           placeholder="Descripción opcional">${isEdit ? h(item.description || '') : ''}</textarea>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="p-price">Precio ($)</label>
-          <input type="number" id="p-price" name="price"
-            value="${isEdit && item.price != null ? item.price : ''}"
-            placeholder="Opcional" min="0" step="0.01">
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6">
+          <label for="p-price" class="form-label fw-semibold">Precio ($)</label>
+          <input type="number" id="p-price" name="price" class="form-control"
+            value="${isEdit && item.price != null ? item.price : ''}" placeholder="Opcional" min="0" step="0.01">
         </div>
-        <div class="form-group">
-          <label for="p-discount">Descuento (%)</label>
-          <input type="number" id="p-discount" name="discount"
-            value="${isEdit ? (item.discount ?? 0) : 0}"
-            min="0" max="100" step="1">
+        <div class="col-sm-6">
+          <label for="p-discount" class="form-label fw-semibold">Descuento (%)</label>
+          <input type="number" id="p-discount" name="discount" class="form-control"
+            value="${isEdit ? (item.discount ?? 0) : 0}" min="0" max="100" step="1">
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="p-qty">Cantidad</label>
-          <input type="number" id="p-qty" name="quantity"
+      <div class="row g-3 mb-3">
+        <div class="col-sm-6">
+          <label for="p-qty" class="form-label fw-semibold">Cantidad</label>
+          <input type="number" id="p-qty" name="quantity" class="form-control"
             value="${isEdit ? (item.quantity ?? 0) : 0}" min="0" step="1">
         </div>
-        <div class="form-group">
-          <label for="p-priority">Prioridad</label>
-          <input type="number" id="p-priority" name="priority"
+        <div class="col-sm-6">
+          <label for="p-priority" class="form-label fw-semibold">Prioridad</label>
+          <input type="number" id="p-priority" name="priority" class="form-control"
             value="${isEdit ? (item.priority ?? 0) : 0}" step="1">
         </div>
       </div>
-      <div class="form-group">
-        <label for="p-image">Imagen principal</label>
-        <input type="file" id="p-image" name="image" accept="image/*">
-        ${isEdit && item.image ? `<p class="field-hint"><a href="${h(item.image)}" target="_blank" rel="noopener">Ver imagen actual</a></p>` : ''}
-        <p id="img-status" class="field-hint"></p>
+      <div class="mb-3">
+        <label for="p-image" class="form-label fw-semibold">Imagen principal</label>
+        <input type="file" id="p-image" name="image" class="form-control" accept="image/*">
+        ${isEdit && item.image ? `<div class="field-hint mt-1"><a href="${h(item.image)}" target="_blank" rel="noopener">Ver imagen actual</a></div>` : ''}
+        <div id="img-status" class="field-hint"></div>
       </div>
-      <div class="form-group">
-        <label for="p-gallery">Galería (múltiples)</label>
-        <input type="file" id="p-gallery" name="gallery" accept="image/*" multiple>
-        ${isEdit && item.gallery?.length ? `<p class="field-hint">${item.gallery.length} imagen(es) en galería actual</p>` : ''}
-        <p id="gal-status" class="field-hint"></p>
+      <div class="mb-3">
+        <label for="p-gallery" class="form-label fw-semibold">Galería (múltiples)</label>
+        <input type="file" id="p-gallery" name="gallery" class="form-control" accept="image/*" multiple>
+        ${isEdit && item.gallery?.length ? `<div class="field-hint mt-1">${item.gallery.length} imagen(es) en galería actual</div>` : ''}
+        <div id="gal-status" class="field-hint"></div>
       </div>
-      <div class="form-group">
-        <label for="p-end">Fecha fin publicación</label>
-        <input type="datetime-local" id="p-end" name="dateEndPublish"
+      <div class="mb-3">
+        <label for="p-end" class="form-label fw-semibold">Fecha fin publicación</label>
+        <input type="datetime-local" id="p-end" name="dateEndPublish" class="form-control"
           value="${isEdit && item.dateEndPublish ? item.dateEndPublish.slice(0, 16) : ''}">
       </div>
-      <div class="form-group">
-        <label for="p-active">Estado <span class="required">*</span></label>
-        <select id="p-active" name="active">
+      <div class="mb-3">
+        <label for="p-active" class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+        <select id="p-active" name="active" class="form-select">
           <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Activo</option>
           <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactivo</option>
         </select>
       </div>
       ${metaFields}
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-save"></i> ${isEdit ? 'Actualizar' : 'Crear'}
+      <div class="d-flex gap-2 mt-4 pt-3 border-top">
+        <button type="submit" class="btn btn-danger">
+          <i class="fas fa-save me-1"></i> ${isEdit ? 'Actualizar' : 'Crear'}
         </button>
         <button type="button" class="btn btn-secondary" id="btn-cancel">
-          <i class="fas fa-times"></i> Cancelar
+          <i class="fas fa-times me-1"></i> Cancelar
         </button>
       </div>
     </form>`)
@@ -265,8 +252,6 @@ export function openForm(item) {
   body.querySelector('#prod-form').addEventListener('submit', e => handleSubmit(e, item))
 }
 
-// ── Submit ────────────────────────────────────────────────────
-
 async function handleSubmit(e, item) {
   e.preventDefault()
   const form = e.target
@@ -292,7 +277,7 @@ async function handleSubmit(e, item) {
 
   const btn = form.querySelector('[type="submit"]')
   btn.disabled = true
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'
 
   try {
     const result = item
@@ -305,6 +290,6 @@ async function handleSubmit(e, item) {
   } catch (err) {
     showError(err.message || 'Error al guardar el producto')
     btn.disabled = false
-    btn.innerHTML = `<i class="fas fa-save"></i> ${item ? 'Actualizar' : 'Crear'}`
+    btn.innerHTML = `<i class="fas fa-save me-1"></i> ${item ? 'Actualizar' : 'Crear'}`
   }
 }

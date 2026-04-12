@@ -1,5 +1,21 @@
 import Category from '../models/Category.js'
 
+// Public — returns all categories (frontend filters active ones client-side)
+export async function getPublicCategories(req, res) {
+  try {
+    const categories = await Category.find();
+    
+    if (!categories) {
+      return res.status(404).json({ message: 'No hay categorías disponibles' })
+    }
+    
+    res.json(categories)
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener categorías', error: err.message })
+  }
+}
+
+// Admin — same but protected
 export async function getCategories(req, res) {
   try {
     const categories = await Category.find()
