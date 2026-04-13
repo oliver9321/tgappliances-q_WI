@@ -1,6 +1,7 @@
 import { getSession, setSession, clearSession } from './auth.js'
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL;
+console.log(API_URL);
 
 /**
  * Internal fetch wrapper that adds Authorization header and handles errors.
@@ -39,7 +40,7 @@ async function apiFetch(path, options = {}) {
  * @returns {Promise<{username: string, name: string, role: string, token: string}>}
  */
 export async function login(username, password) {
-  console.log("login 2");
+
   const res = await fetch(`${API_URL}/api/v1/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
