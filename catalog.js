@@ -22,20 +22,22 @@ const PLACEHOLDER_IMAGE =
 
 // ─── API Client ───────────────────────────────────────────────────────────────
 
+const API_URL = import.meta.env.VITE_API_URL
+
 async function fetchCategories() {
-  const res = await fetch('/api/v1/categories/public');
+  const res = await fetch(`${API_URL}/api/v1/categories/public`);
   if (!res.ok) throw new Error(`Failed to fetch categories (${res.status})`);
   return res.json();
 }
 
 async function fetchProducts() {
-  const res = await fetch('/api/v1/products/public?active=true');
+  const res = await fetch(`${API_URL}/api/v1/products/public?active=true`);
   if (!res.ok) throw new Error(`Failed to fetch products (${res.status})`);
   return res.json();
 }
 
 async function fetchProductById(id) {
-  const res = await fetch(`/api/v1/products/${id}`);
+  const res = await fetch(`${API_URL}/api/v1/products/${id}`);
   if (!res.ok) throw new Error(`Failed to fetch product (${res.status})`);
   return res.json();
 }
