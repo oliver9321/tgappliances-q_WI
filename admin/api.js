@@ -1,7 +1,6 @@
 import { getSession, setSession, clearSession } from './auth.js'
 
 const API_URL = import.meta.env.VITE_API_URL;
-console.log(API_URL);
 
 /**
  * Internal fetch wrapper that adds Authorization header and handles errors.

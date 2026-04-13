@@ -1,5 +1,5 @@
 import { getSession } from './auth.js'
-
+const API_URL = import.meta.env.VITE_API_URL;
 /**
  * Uploads a single image file to the backend.
  * @param {File} file - The image file to upload.
@@ -11,7 +11,7 @@ export async function uploadImage(file) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const res = await fetch('/api/v1/upload/image', {
+  const res = await fetch(`${API_URL}/api/v1/upload/image`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${session?.token}`,
@@ -42,7 +42,7 @@ export async function uploadGallery(files) {
     formData.append('files', file)
   }
 
-  const res = await fetch('/api/v1/upload/gallery', {
+  const res = await fetch(`${API_URL}/api/v1/upload/gallery`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${session?.token}`,
