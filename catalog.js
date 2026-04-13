@@ -110,7 +110,7 @@ function renderSkeleton() {
 function renderError(message) {
   const root = document.getElementById('catalog-root');
   if (!root) return;
-  root.innerHTML = `<p class="catalog-error">${message}</p>`;
+  root.innerHTML = `<center><p class="catalog-error">${message}</p></center>`;
 }
 
 // ─── Filter Bar ───────────────────────────────────────────────────────────────
@@ -438,6 +438,6 @@ export async function initCatalog() {
 
   } catch (err) {
     console.error('initCatalog error:', err);
-    renderError('No fue posible cargar el inventario. Intenta de nuevo más tarde.');
+    renderError('It was not possible to load the inventory');
   }
 }
