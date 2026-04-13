@@ -11,6 +11,8 @@ const state = {
   products: [],         // Product[] — Published_Products
   activeFilter: 'all',  // 'all' | category.name
   currentProduct: null, // Product | null
+  currentPage: 1,       // current pagination page
+  pageSize: 8,          // products per page
 };
 
 // ─── Placeholder image ────────────────────────────────────────────────────────
@@ -76,11 +78,11 @@ export function groupByCategory(products, categories) {
  * Returns "Consultar precio" for null/undefined.
  */
 export function formatPrice(price) {
-  if (price === null || price === undefined) return 'Consultar precio';
+  if (price === null || price === undefined) return '---';
   if (price > 0) {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
   }
-  return 'Consultar precio';
+  return '---';
 }
 
 // ─── Skeleton & Error Renderers ───────────────────────────────────────────────
@@ -154,6 +156,7 @@ function renderFilterBar(categories, products) {
 
 function setActiveFilter(categoryName) {
   state.activeFilter = categoryName;
+  state.currentPage = 1; // reset to first page on filter change
 
   // Update active class on filter buttons
   const root = document.getElementById('catalog-root');
@@ -179,17 +182,24 @@ function renderProductGrid(products) {
   const root = document.getElementById('catalog-root');
   if (!root) return;
 
-  // Remove existing grid
-  const existing = root.querySelector('.product-grid');
-  if (existing) existing.remove();
+  // Remove existing grid and pagination
+  root.querySelector('.product-grid')?.remove();
+  root.querySelector('.catalog-pagination')?.remove();
 
   // Sort by priority descending
   const sorted = [...products].sort((a, b) => (b.priority || 0) - (a.priority || 0));
 
+  // Pagination math
+  const totalPages = Math.max(1, Math.ceil(sorted.length / state.pageSize));
+  state.currentPage = Math.min(state.currentPage, totalPages);
+  const start = (state.currentPage - 1) * state.pageSize;
+  const paginated = sorted.slice(start, start + state.pageSize);
+
+  // Grid
   const grid = document.createElement('div');
   grid.className = 'product-grid';
 
-  for (const product of sorted) {
+  for (const product of paginated) {
     const card = document.createElement('div');
     card.className = 'product-card';
 
@@ -199,6 +209,10 @@ function renderProductGrid(products) {
       ? `<span class="product-card-discount">${product.discount}% OFF</span>`
       : '';
 
+    const priceHTML = product.discount > 0
+      ? `<p><b class="productb text-price-discount">${priceText}</b> <b class="product-card-price"> ${formatPrice(product.price * (product.discount / 100))}</b></p>`
+      : `<p><b class="product-card-price">${priceText}</b></p>`;
+
     card.innerHTML = `
       <div class="product-card-image">
         <img src="${imgSrc}" alt="${product.title}" loading="lazy" />
@@ -206,7 +220,7 @@ function renderProductGrid(products) {
       </div>
       <div class="product-card-body">
         <h3 class="product-card-title">${product.title}</h3>
-        <p class="product-card-price">${priceText}</p>
+        <p class="product-card-price">${priceHTML}</p>
         <span class="product-card-category">${product.category}</span>
       </div>
     `;
@@ -216,6 +230,64 @@ function renderProductGrid(products) {
   }
 
   root.appendChild(grid);
+
+  // Pagination controls — only render if more than one page
+  if (totalPages > 1) {
+    const nav = document.createElement('div');
+    nav.className = 'catalog-pagination';
+
+    // Prev button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'page-btn' + (state.currentPage === 1 ? ' disabled' : '');
+    prevBtn.disabled = state.currentPage === 1;
+    prevBtn.innerHTML = '&laquo;';
+    prevBtn.addEventListener('click', () => {
+      if (state.currentPage > 1) {
+        state.currentPage--;
+        renderProductGrid(products);
+        scrollToShop();
+      }
+    });
+    nav.appendChild(prevBtn);
+
+    // Page number buttons
+    for (let i = 1; i <= totalPages; i++) {
+      const pageBtn = document.createElement('button');
+      pageBtn.className = 'page-btn' + (i === state.currentPage ? ' active' : '');
+      pageBtn.textContent = i;
+      pageBtn.addEventListener('click', () => {
+        if (i !== state.currentPage) {
+          state.currentPage = i;
+          renderProductGrid(products);
+          scrollToShop();
+        }
+      });
+      nav.appendChild(pageBtn);
+    }
+
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'page-btn' + (state.currentPage === totalPages ? ' disabled' : '');
+    nextBtn.disabled = state.currentPage === totalPages;
+    nextBtn.innerHTML = '&raquo;';
+    nextBtn.addEventListener('click', () => {
+      if (state.currentPage < totalPages) {
+        state.currentPage++;
+        renderProductGrid(products);
+        scrollToShop();
+      }
+    });
+    nav.appendChild(nextBtn);
+
+    root.appendChild(nav);
+  }
+}
+
+function scrollToShop() {
+  const shop = document.getElementById('shop');
+  if (!shop) return;
+  const navbarHeight = document.querySelector('.navbar')?.offsetHeight || 0;
+  window.scrollTo({ top: shop.offsetTop - navbarHeight, behavior: 'smooth' });
 }
 
 // ─── Product Details ──────────────────────────────────────────────────────────
@@ -231,14 +303,6 @@ function renderProductDetails(product) {
     ? `<p class="product-details-discount"><strong>Discount:</strong> ${product.discount}% OFF</p>`
     : '';
 
-  const priorityHtml = product.priority > 0
-    ? `<p class="product-details-priority"><span class="priority-badge">⭐ Featured</span></p>`
-    : '';
-
-  const createdByHtml = product.createdBy
-    ? `<p><strong>Created by:</strong> ${product.createdBy}</p>`
-    : '';
-
   const dateEndHtml = product.dateEndPublish
     ? `<p><strong>Available until:</strong> ${new Date(product.dateEndPublish).toLocaleDateString()}</p>`
     : '';
@@ -252,6 +316,10 @@ function renderProductDetails(product) {
       </div>`
     : '';
 
+  const priceHTML = product.discount > 0
+    ? `<p><b class="productb text-price-discount">${priceText}</b> <b class="product-card-price"> ${formatPrice(product.price * (product.discount / 100))}</b></p>`
+    : `<p><b class="product-card-price">${priceText}</b></p>`;
+
   detailsView.innerHTML = `
     <div class="product-details-inner">
       <button class="product-details-back-btn">← Back to Inventory</button>
@@ -262,16 +330,10 @@ function renderProductDetails(product) {
         </div>
         <div class="product-details-info">
           <h2 class="product-details-title">${product.title}</h2>
-          ${product.description ? `<p class="product-details-description">${product.description}</p>` : ''}
-          <p class="product-details-price">${priceText}</p>
-          ${discountHtml}
-          <p><strong>Category:</strong> ${product.category}</p>
-          <p><strong>Quantity available:</strong> ${product.quantity}</p>
-          <p><strong>Status:</strong> ${product.active ? 'Active' : 'Inactive'}</p>
-          ${product.dateCreation ? `<p><strong>Date added:</strong> ${new Date(product.dateCreation).toLocaleDateString()}</p>` : ''}
-          ${createdByHtml}
+          ${priceHTML} ${discountHtml}
+          ${product.description ? `<div class="product-details-description">${product.description}</div>` : ''}
+          ${product.quantity > 0 ? `<p><strong>Quantity available: ${product.quantity}</strong></p>` : ""}
           ${dateEndHtml}
-          ${priorityHtml}
         </div>
       </div>
     </div>
@@ -309,21 +371,29 @@ async function showProductDetails(id) {
   const detailsView = document.getElementById('product-details-view');
   const catalogRoot = document.getElementById('catalog-root');
 
+  // Show details container, hide catalog while loading
+  if (catalogRoot) catalogRoot.style.display = 'none';
+  if (detailsView) {
+    detailsView.innerHTML = `<p style="padding:2rem;color:#7f8c8d;"><i class="fas fa-spinner fa-spin"></i> Loading...</p>`;
+    detailsView.classList.add('active');
+  }
+
   try {
     const product = await fetchProductById(id);
     state.currentProduct = product;
     renderProductDetails(product);
-
-    if (catalogRoot) catalogRoot.style.display = 'none';
-    if (detailsView) detailsView.classList.add('active');
-
     window.location.hash = '#product-details';
   } catch (err) {
+    console.error('showProductDetails error:', err);
     if (detailsView) {
-      detailsView.innerHTML = `<p class="catalog-error">Could not load product details. Please try again later.</p>`;
-      detailsView.classList.add('active');
+      detailsView.innerHTML = `
+        <div style="padding:2rem;">
+          <button class="product-details-back-btn" id="err-back-btn">← Back to Inventory</button>
+          <p style="color:#e74c3c;margin-top:1rem;">Could not load product details. Please try again later.</p>
+          <p style="color:#7f8c8d;font-size:0.85rem;">${err.message}</p>
+        </div>`;
+      detailsView.querySelector('#err-back-btn')?.addEventListener('click', showCatalog);
     }
-    if (catalogRoot) catalogRoot.style.display = 'none';
   }
 }
 
@@ -363,7 +433,7 @@ export async function initCatalog() {
 
     renderFilterBar(state.categories, state.products);
     renderProductGrid(state.products);
-    
+
   } catch (err) {
     console.error('initCatalog error:', err);
     renderError('No fue posible cargar el inventario. Intenta de nuevo más tarde.');

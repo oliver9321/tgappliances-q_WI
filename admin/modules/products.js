@@ -4,10 +4,13 @@ import { validateProduct } from '../validators.js'
 import { showSuccess, showError } from '../notifications.js'
 import { uploadImage, uploadGallery } from '../imageService.js'
 import { openModal, closeModal, getModalBody } from '../modal.js'
+import { Jodit } from 'jodit'
+import 'jodit/es2021/jodit.min.css'
 
 let containerEl = null
 let imageUrl = ''
 let galleryUrls = []
+let joditEditor = null  // Jodit instance
 
 function h(str) {
   if (str == null) return ''
@@ -154,8 +157,8 @@ export function openForm(item) {
       </div>
       <div class="mb-3">
         <label for="p-desc" class="form-label fw-semibold">Descripción</label>
-        <textarea id="p-desc" name="description" class="form-control" rows="3"
-          placeholder="Descripción opcional">${isEdit ? h(item.description || '') : ''}</textarea>
+        <textarea id="p-desc" name="description"
+          placeholder="Descripción opcional">${isEdit ? (item.description || '') : ''}</textarea>
       </div>
       <div class="row g-3 mb-3">
         <div class="col-sm-6">
@@ -219,6 +222,44 @@ export function openForm(item) {
   const body = getModalBody()
   body.querySelector('#btn-cancel').addEventListener('click', closeModal)
 
+  // Destroy any previous Jodit instance before creating a new one
+  if (joditEditor) {
+    joditEditor.destruct()
+    joditEditor = null
+  }
+
+  // Initialize Jodit on the description textarea
+  joditEditor = Jodit.make('#p-desc', {
+    height: 250,
+    language: 'es',
+    toolbarButtonSize: 'small',
+    buttons: [
+      'bold', 'italic', 'underline', 'strikethrough', '|',
+      'ul', 'ol', '|',
+      'outdent', 'indent', '|',
+      'font', 'fontsize', 'brush', '|',
+      'align', '|',
+      'undo', 'redo', '|',
+      'hr', 'eraser', 'copyformat', '|',
+      'fullsize'
+    ],
+    placeholder: 'Descripción opcional',
+    askBeforePasteHTML: false,
+    askBeforePasteFromWord: false,
+    defaultActionOnPaste: 'insert_clear_html',
+  })
+
+  // Destroy Jodit when modal closes
+  const modalEl = document.getElementById('adminModal')
+  const onModalHide = () => {
+    if (joditEditor) {
+      joditEditor.destruct()
+      joditEditor = null
+    }
+    modalEl.removeEventListener('hidden.bs.modal', onModalHide)
+  }
+  modalEl.addEventListener('hidden.bs.modal', onModalHide)
+
   body.querySelector('#p-image').addEventListener('change', async (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -257,10 +298,13 @@ async function handleSubmit(e, item) {
   const form = e.target
   const fd   = new FormData(form)
 
+  // Get description from Jodit editor if available, fallback to textarea
+  const description = joditEditor ? joditEditor.value : (fd.get('description') || '')
+
   const data = {
     category:       fd.get('category'),
     title:          fd.get('title'),
-    description:    fd.get('description') || '',
+    description,
     price:          fd.get('price') !== '' ? Number(fd.get('price')) : null,
     discount:       fd.get('discount') !== '' ? Number(fd.get('discount')) : 0,
     image:          imageUrl || '',

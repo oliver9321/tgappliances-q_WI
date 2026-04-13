@@ -7,11 +7,13 @@ const router = Router()
 // Public — catalog for the website
 router.get('/public', getPublicProducts)
 router.get('/by-category/:category', getProductsByCategory)
-router.get('/:id', getProductById)
 
-// Admin — protected
+// Admin — protected (must be before /:id to avoid conflicts)
 router.get('/', authMiddleware, getProducts)
 router.post('/', authMiddleware, createProduct)
 router.put('/:id', authMiddleware, updateProduct)
+
+// Public — single product by ID (last, so it doesn't swallow other routes)
+router.get('/:id', getProductById)
 
 export default router
