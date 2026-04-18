@@ -314,7 +314,7 @@ function renderProductDetails(product) {
       : priceText;
 
   const shareUrl = buildShareUrl(product._id);
-  const shareMessage = `${product.title} - ${finalPriceText}\n${shareUrl}`;
+  const shareMessage = `Hi! I'm interested in this product and would like more information: ${product.title} - ${finalPriceText}\n\nLink: ${shareUrl}`;
   const whatsappShareLink = `https://wa.me/18607171810?text=${encodeURIComponent(shareMessage)}`;
   const messengerLink = `https://m.me/tgappliance`;
 
