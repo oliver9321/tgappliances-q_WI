@@ -38,6 +38,8 @@ export default defineConfig({
         adminProds: resolve(__dirname, 'admin/products.html'),
         adminUsers: resolve(__dirname, 'admin/users.html'),
         policies:   resolve(__dirname, 'policies/index.html'),
+        plainville: resolve(__dirname, 'used-appliances-plainville-ct.html'),
+        bristol:    resolve(__dirname, 'used-appliances-bristol-ct.html'),
       },
     },
   },
