@@ -37,6 +37,7 @@ export default defineConfig({
         adminCats:  resolve(__dirname, 'admin/categories.html'),
         adminProds: resolve(__dirname, 'admin/products.html'),
         adminUsers: resolve(__dirname, 'admin/users.html'),
+        policies:   resolve(__dirname, 'policies/index.html'),
       },
     },
   },
