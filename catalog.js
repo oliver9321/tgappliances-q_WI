@@ -294,6 +294,13 @@ function scrollToShop() {
 
 // ─── Product Details ──────────────────────────────────────────────────────────
 
+function buildShareUrl(productId) {
+  const url = new URL(window.location.origin + window.location.pathname);
+  url.searchParams.set('product', productId);
+  url.hash = '#shop';
+  return url.toString();
+}
+
 function renderProductDetails(product) {
   const detailsView = document.getElementById('product-details-view');
   if (!detailsView) return;
@@ -306,11 +313,9 @@ function renderProductDetails(product) {
       ? formatPrice(product.price * (product.discount / 100))
       : priceText;
 
-  const contactMessage = `Hola, me interesa este producto:
-Título: ${product.title}
-Precio: ${finalPriceText}`;
-
-  const whatsappLink = `https://wa.me/18607171810?text=${encodeURIComponent(contactMessage)}`;
+  const shareUrl = buildShareUrl(product._id);
+  const shareMessage = `${product.title} - ${finalPriceText}\n${shareUrl}`;
+  const whatsappShareLink = `https://wa.me/18607171810?text=${encodeURIComponent(shareMessage)}`;
   const messengerLink = `https://m.me/tgappliance`;
 
   const discountHtml = product.discount > 0
@@ -351,7 +356,7 @@ Precio: ${finalPriceText}`;
           <hr>
           <h2 class="product-details-title">💬Talk to us now</h2>
           <div class="product-contact-buttons">
-            <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
+            <a href="${whatsappShareLink}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
              <i class="fa fa-whatsapp"></i> WhatsApp
             </a>
             <a href="${messengerLink}" target="_blank" rel="noopener noreferrer" class="btn-messenger">
@@ -363,6 +368,7 @@ Precio: ${finalPriceText}`;
               </a>
 
           </div>
+    
         </div>
       </div>
     </div>
@@ -391,6 +397,12 @@ function showCatalog() {
 
   if (detailsView) detailsView.classList.remove('active');
   if (catalogRoot) catalogRoot.style.display = '';
+
+  // Clean up URL
+  const url = new URL(window.location.href);
+  url.searchParams.delete('product');
+  url.hash = '#shop';
+  history.pushState({}, '', url.toString());
 }
 
 async function showProductDetails(id) {
@@ -404,11 +416,16 @@ async function showProductDetails(id) {
     detailsView.classList.add('active');
   }
 
+  // Update URL with product id (no page reload)
+  const url = new URL(window.location.href);
+  url.searchParams.set('product', id);
+  url.hash = '#shop';
+  history.pushState({ productId: id }, '', url.toString());
+
   try {
     const product = await fetchProductById(id);
     state.currentProduct = product;
     renderProductDetails(product);
-    window.location.hash = '#product-details';
   } catch (err) {
     console.error('showProductDetails error:', err);
     if (detailsView) {
@@ -425,15 +442,20 @@ async function showProductDetails(id) {
 
 function registerNavigationListeners() {
   window.addEventListener('popstate', handleNavigation);
-  window.addEventListener('hashchange', handleNavigation);
 }
 
-function handleNavigation() {
+function handleNavigation(e) {
+  const productId = e?.state?.productId || new URL(window.location.href).searchParams.get('product');
   const detailsView = document.getElementById('product-details-view');
   const isDetailsActive = detailsView && detailsView.classList.contains('active');
 
-  if (window.location.hash !== '#product-details' && isDetailsActive) {
-    showCatalog();
+  if (productId && !isDetailsActive) {
+    showProductDetails(productId);
+  } else if (!productId && isDetailsActive) {
+    const detailsViewEl = document.getElementById('product-details-view');
+    const catalogRoot = document.getElementById('catalog-root');
+    if (detailsViewEl) detailsViewEl.classList.remove('active');
+    if (catalogRoot) catalogRoot.style.display = '';
   }
 }
 
@@ -459,6 +481,12 @@ export async function initCatalog() {
 
     renderFilterBar(state.categories, state.products);
     renderProductGrid(state.products);
+
+    // If URL has ?product=<id>, open that product directly
+    const productId = new URL(window.location.href).searchParams.get('product');
+    if (productId) {
+      showProductDetails(productId);
+    }
 
   } catch (err) {
     console.error('initCatalog error:', err);

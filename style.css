@@ -2160,3 +2160,33 @@ body {
   text-decoration: none;
   font-weight: 600;
 }
+
+.product-share-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+}
+
+.share-whatsapp {
+  background: #25D366;
+  color: #fff;
+}
+
+.share-copy {
+  background: #f0f0f0;
+  color: #333;
+}
