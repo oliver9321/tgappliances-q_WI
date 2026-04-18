@@ -2126,3 +2126,37 @@ body {
 .product-details-description ul,
 .product-details-description ol { padding-left: 1.4em; margin-bottom: 0.6em; }
 .product-details-description strong { color: var(--text-dark); }
+
+.product-contact-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-whatsapp,
+.btn-messenger {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn-whatsapp {
+  background: #25D366;
+}
+
+.btn-messenger {
+  background: #0084FF;
+}
+
+.btn-call {
+  background: #e74c3c; /* azul tipo llamada */
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}

@@ -301,6 +301,18 @@ function renderProductDetails(product) {
   const imgSrc = product.image && product.image.trim() ? product.image : PLACEHOLDER_IMAGE;
   const priceText = formatPrice(product.price);
 
+  const finalPriceText =
+    product.discount > 0
+      ? formatPrice(product.price * (product.discount / 100))
+      : priceText;
+
+  const contactMessage = `Hola, me interesa este producto:
+Título: ${product.title}
+Precio: ${finalPriceText}`;
+
+  const whatsappLink = `https://wa.me/18607171810?text=${encodeURIComponent(contactMessage)}`;
+  const messengerLink = `https://m.me/tgappliance`;
+
   const discountHtml = product.discount > 0
     ? `<p class="product-details-discount"><strong>Discount:</strong> ${product.discount}% OFF</p>`
     : '';
@@ -319,7 +331,7 @@ function renderProductDetails(product) {
     : '';
 
   const priceHTML = product.discount > 0
-    ? `<p><b class="productb text-price-discount">${priceText}</b> <b class="product-card-price"> ${formatPrice(product.price * (product.discount / 100))}</b></p>`
+    ? `<p><b class="productb text-price-discount">${priceText}</b> <b class="product-card-price"> ${finalPriceText}</b></p>`
     : `<p><b class="product-card-price">${priceText}</b></p>`;
 
   detailsView.innerHTML = `
@@ -336,17 +348,30 @@ function renderProductDetails(product) {
           ${product.description ? `<div class="product-details-description">${product.description}</div>` : ''}
           ${product.quantity > 0 ? `<p><strong>Quantity available: ${product.quantity}</strong></p>` : ""}
           ${dateEndHtml}
+          <hr>
+          <h2 class="product-details-title">💬Talk to us now</h2>
+          <div class="product-contact-buttons">
+            <a href="${whatsappLink}" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
+             <i class="fa fa-whatsapp"></i> WhatsApp
+            </a>
+            <a href="${messengerLink}" target="_blank" rel="noopener noreferrer" class="btn-messenger">
+              <i class="fa fa-facebook"></i> Facebook
+            </a>
+
+              <a href="tel:+18602617084" class="btn-call">
+                <i class="fa fa-phone"></i> Call now
+              </a>
+
+          </div>
         </div>
       </div>
     </div>
   `;
 
-  // Back button handler
   detailsView.querySelector('.product-details-back-btn').addEventListener('click', () => {
     showCatalog();
   });
 
-  // Gallery thumbnail click handlers
   if (hasGallery) {
     const mainImg = detailsView.querySelector('#product-details-main-img');
     detailsView.querySelectorAll('.gallery-thumb').forEach(thumb => {
@@ -358,7 +383,6 @@ function renderProductDetails(product) {
     });
   }
 }
-
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
 function showCatalog() {
