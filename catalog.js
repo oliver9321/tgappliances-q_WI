@@ -137,7 +137,7 @@ function renderFilterBar(categories, products) {
   // "Todos" button
   const todosBtn = document.createElement('button');
   todosBtn.className = 'filter-btn' + (state.activeFilter === 'all' ? ' active' : '');
-  todosBtn.textContent = 'Todos';
+  todosBtn.textContent = 'All';
   todosBtn.addEventListener('click', () => setActiveFilter('all'));
   bar.appendChild(todosBtn);
 
@@ -164,7 +164,7 @@ function setActiveFilter(categoryName) {
   const root = document.getElementById('catalog-root');
   if (root) {
     root.querySelectorAll('.filter-btn').forEach(btn => {
-      const isAll = categoryName === 'all' && btn.textContent === 'Todos';
+      const isAll = categoryName === 'all' && btn.textContent === 'All';
       const isMatch = btn.dataset.category === categoryName;
       btn.classList.toggle('active', isAll || isMatch);
     });
