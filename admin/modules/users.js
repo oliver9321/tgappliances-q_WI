@@ -31,14 +31,14 @@ export async function init(el) {
   containerEl = el
   containerEl.innerHTML = `
     <div class="d-flex align-items-center gap-2 text-muted p-4">
-      <i class="fas fa-spinner fa-spin"></i> Cargando usuarios...
+      <i class="fas fa-spinner fa-spin"></i> Loading users...
     </div>`
 
   try {
     const list = await fetchUsers()
     setUsers(list)
   } catch (err) {
-    showError(err.message || 'Error al cargar los usuarios')
+    showError(err.message || 'Error loading users')
   }
 
   renderList()
@@ -50,8 +50,8 @@ export function renderList() {
 
   const rows = list.map(user => {
     const badge = user.active
-      ? '<span class="badge bg-success">Activo</span>'
-      : '<span class="badge bg-danger">Inactivo</span>'
+      ? '<span class="badge bg-success">Active</span>'
+      : '<span class="badge bg-danger">Inactive</span>'
     let dateStr = '—'
     if (user.dateCreation) {
       const raw = typeof user.dateCreation === 'object' && user.dateCreation.$date
@@ -65,7 +65,7 @@ export function renderList() {
       <td>${badge}</td>
       <td>${dateStr}</td>
       <td class="text-center">
-        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${h(user._id)}" title="Editar">
+        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${h(user._id)}" title="Edit">
           <i class="fas fa-pencil-alt"></i>
         </button>
       </td>
@@ -74,9 +74,9 @@ export function renderList() {
 
   containerEl.innerHTML = `
     <div class="section-header">
-      <h2 class="h5 fw-bold mb-0"><i class="fas fa-users me-2"></i>Usuarios</h2>
+      <h2 class="h5 fw-bold mb-0"><i class="fas fa-users me-2"></i>Users</h2>
       <button class="btn btn-danger btn-sm" id="btn-new-user">
-        <i class="fas fa-plus me-1"></i> Nuevo Usuario
+        <i class="fas fa-plus me-1"></i> New User
       </button>
     </div>
     <div class="card shadow-sm">
@@ -84,16 +84,16 @@ export function renderList() {
         <table class="table table-hover table-bordered align-middle mb-0">
           <thead class="table-dark">
             <tr>
-              <th>Nombre</th>
+              <th>Name</th>
               <th>Username</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th>Fecha creación</th>
-              <th style="width:70px">Editar</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Creation Date</th>
+              <th style="width:70px">Edit</th>
             </tr>
           </thead>
           <tbody>
-            ${rows || '<tr><td colspan="6" class="text-center text-muted py-4">Sin usuarios registrados</td></tr>'}
+            ${rows || '<tr><td colspan="6" class="text-center text-muted py-4">No users registered</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -122,60 +122,60 @@ export function openForm(item) {
   const metaFields = isEdit ? `
     <div class="row g-3 mt-1">
       <div class="col-sm-6">
-        <label class="form-label fw-semibold">Fecha de creación</label>
+        <label class="form-label fw-semibold">Creation Date</label>
         <input type="text" class="form-control" value="${h(dateDisplay)}" disabled>
       </div>
       <div class="col-sm-6">
-        <label class="form-label fw-semibold">Creado por</label>
+        <label class="form-label fw-semibold">Created By</label>
         <input type="text" class="form-control" value="${h(item.createdBy || '—')}" disabled>
       </div>
     </div>` : ''
 
-  openModal(isEdit ? 'Editar Usuario' : 'Nuevo Usuario', `
+  openModal(isEdit ? 'Edit User' : 'New User', `
     <form id="user-form" novalidate>
       <div class="mb-3">
-        <label for="u-name" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+        <label for="u-name" class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
         <input type="text" id="u-name" name="name" class="form-control"
-          value="${isEdit ? h(item.name) : ''}" placeholder="Nombre completo" autofocus>
+          value="${isEdit ? h(item.name) : ''}" placeholder="Full name" autofocus>
       </div>
       <div class="mb-3">
         <label for="u-username" class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
         <input type="text" id="u-username" name="username" class="form-control"
-          value="${isEdit ? h(item.username) : ''}" placeholder="Solo letras, números, - y _">
+          value="${isEdit ? h(item.username) : ''}" placeholder="Letters, numbers, - and _ only">
       </div>
       <div class="mb-3">
-        <label for="u-role" class="form-label fw-semibold">Rol <span class="text-danger">*</span></label>
+        <label for="u-role" class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
         <select id="u-role" name="role" class="form-select">
-          <option value="">— Selecciona un rol —</option>
+          <option value="">— Select a role —</option>
           <option value="admin"  ${isEdit && item.role === 'admin'  ? 'selected' : ''}>Admin</option>
           <option value="editor" ${isEdit && item.role === 'editor' ? 'selected' : ''}>Editor</option>
         </select>
       </div>
       <div class="mb-3">
         <label for="u-pass" class="form-label fw-semibold">
-          Contraseña
+          Password
           ${isEdit
-            ? '<span class="text-muted fw-normal small"> — dejar vacío para no cambiar</span>'
+            ? '<span class="text-muted fw-normal small"> — leave empty to keep unchanged</span>'
             : '<span class="text-danger">*</span>'}
         </label>
         <input type="password" id="u-pass" name="password" class="form-control" value=""
-          placeholder="${isEdit ? 'Dejar vacío para mantener' : 'Mínimo 6 caracteres'}"
+          placeholder="${isEdit ? 'Leave empty to keep' : 'Minimum 6 characters'}"
           autocomplete="new-password">
       </div>
       <div class="mb-3">
-        <label for="u-active" class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+        <label for="u-active" class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
         <select id="u-active" name="active" class="form-select">
-          <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Activo</option>
-          <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactivo</option>
+          <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Active</option>
+          <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactive</option>
         </select>
       </div>
       ${metaFields}
       <div class="d-flex gap-2 mt-4 pt-3 border-top">
         <button type="submit" class="btn btn-danger">
-          <i class="fas fa-save me-1"></i> ${isEdit ? 'Actualizar' : 'Crear'}
+          <i class="fas fa-save me-1"></i> ${isEdit ? 'Update' : 'Create'}
         </button>
         <button type="button" class="btn btn-secondary" id="btn-cancel">
-          <i class="fas fa-times me-1"></i> Cancelar
+          <i class="fas fa-times me-1"></i> Cancel
         </button>
       </div>
     </form>`)
@@ -205,7 +205,7 @@ async function handleSubmit(e, item) {
 
   const btn = form.querySelector('[type="submit"]')
   btn.disabled = true
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...'
 
   try {
     const result = isEdit
@@ -214,15 +214,15 @@ async function handleSubmit(e, item) {
     upsertUser(result)
     closeModal()
     renderList()
-    showSuccess(isEdit ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente')
+    showSuccess(isEdit ? 'User updated successfully' : 'User created successfully')
   } catch (err) {
     const msg = err.message || ''
-    if (msg.includes('409') || msg.toLowerCase().includes('username ya está en uso')) {
-      showError('El username ya está en uso. Elige otro.')
+    if (msg.includes('409') || msg.toLowerCase().includes('username is already in use')) {
+      showError('Username is already in use. Choose another.')
     } else {
-      showError(msg || 'Error al guardar el usuario')
+      showError(msg || 'Error saving user')
     }
     btn.disabled = false
-    btn.innerHTML = `<i class="fas fa-save me-1"></i> ${isEdit ? 'Actualizar' : 'Crear'}`
+    btn.innerHTML = `<i class="fas fa-save me-1"></i> ${isEdit ? 'Update' : 'Create'}`
   }
 }

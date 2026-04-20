@@ -37,7 +37,7 @@ export async function init(el) {
   containerEl = el
   containerEl.innerHTML = `
     <div class="d-flex align-items-center gap-2 text-muted p-4">
-      <i class="fas fa-spinner fa-spin"></i> Cargando productos...
+      <i class="fas fa-spinner fa-spin"></i> Loading products...
     </div>`
 
   try {
@@ -45,7 +45,7 @@ export async function init(el) {
     setCategories(cats)
     setProducts(prods)
   } catch (err) {
-    showError(err.message || 'Error al cargar los productos')
+    showError(err.message || 'Error loading products')
   }
 
   renderList()
@@ -57,8 +57,8 @@ export function renderList() {
 
   const rows = list.map(prod => {
     const badge = prod.active
-      ? '<span class="badge bg-success">Activo</span>'
-      : '<span class="badge bg-danger">Inactivo</span>'
+      ? '<span class="badge bg-success">Active</span>'
+      : '<span class="badge bg-danger">Inactive</span>'
     const date  = prod.dateCreation ? new Date(prod.dateCreation).toLocaleDateString('es-MX') : '—'
     const price = prod.price != null ? `$${Number(prod.price).toFixed(2)}` : '—'
     const thumb = prod.image
@@ -73,7 +73,7 @@ export function renderList() {
       <td>${badge}</td>
       <td>${date}</td>
       <td class="text-center">
-        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${h(prod._id)}" title="Editar">
+        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${h(prod._id)}" title="Edit">
           <i class="fas fa-pencil-alt"></i>
         </button>
       </td>
@@ -82,9 +82,9 @@ export function renderList() {
 
   containerEl.innerHTML = `
     <div class="section-header">
-      <h2 class="h5 fw-bold mb-0"><i class="fas fa-box me-2"></i>Productos</h2>
+      <h2 class="h5 fw-bold mb-0"><i class="fas fa-box me-2"></i>Products</h2>
       <button class="btn btn-danger btn-sm" id="btn-new-prod">
-        <i class="fas fa-plus me-1"></i> Nuevo Producto
+        <i class="fas fa-plus me-1"></i> New Product
       </button>
     </div>
     <div class="card shadow-sm">
@@ -93,16 +93,16 @@ export function renderList() {
           <thead class="table-dark">
             <tr>
               <th style="width:56px">Img</th>
-              <th>Título</th>
-              <th>Categoría</th>
-              <th>Precio</th>
-              <th>Estado</th>
-              <th>Fecha creación</th>
-              <th style="width:70px">Editar</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th>Creation Date</th>
+              <th style="width:70px">Edit</th>
             </tr>
           </thead>
           <tbody>
-            ${rows || '<tr><td colspan="7" class="text-center text-muted py-4">Sin productos registrados</td></tr>'}
+            ${rows || '<tr><td colspan="7" class="text-center text-muted py-4">No products registered</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -132,89 +132,89 @@ export function openForm(item) {
   const metaFields = isEdit ? `
     <div class="row g-3 mt-1">
       <div class="col-sm-6">
-        <label class="form-label fw-semibold">Fecha de creación</label>
+        <label class="form-label fw-semibold">Creation Date</label>
         <input type="text" class="form-control" value="${h(item.dateCreation || '—')}" disabled>
       </div>
       <div class="col-sm-6">
-        <label class="form-label fw-semibold">Creado por</label>
+        <label class="form-label fw-semibold">Created By</label>
         <input type="text" class="form-control" value="${h(item.createdBy || '—')}" disabled>
       </div>
     </div>` : ''
 
-  openModal(isEdit ? 'Editar Producto' : 'Nuevo Producto', `
+  openModal(isEdit ? 'Edit Product' : 'New Product', `
     <form id="prod-form" novalidate>
       <div class="mb-3">
-        <label for="p-cat" class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
+        <label for="p-cat" class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
         <select id="p-cat" name="category" class="form-select" required>
-          <option value="">— Selecciona una categoría —</option>
+          <option value="">— Select a category —</option>
           ${catOptions}
         </select>
       </div>
       <div class="mb-3">
-        <label for="p-title" class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+        <label for="p-title" class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
         <input type="text" id="p-title" name="title" class="form-control"
-          value="${isEdit ? h(item.title) : ''}" placeholder="Título del producto" autofocus>
+          value="${isEdit ? h(item.title) : ''}" placeholder="Product title" autofocus>
       </div>
       <div class="mb-3">
-        <label for="p-desc" class="form-label fw-semibold">Descripción</label>
+        <label for="p-desc" class="form-label fw-semibold">Description</label>
         <textarea id="p-desc" name="description"
-          placeholder="Descripción opcional">${isEdit ? (item.description || '') : ''}</textarea>
+          placeholder="Optional description">${isEdit ? (item.description || '') : ''}</textarea>
       </div>
       <div class="row g-3 mb-3">
         <div class="col-sm-6">
-          <label for="p-price" class="form-label fw-semibold">Precio ($)</label>
+          <label for="p-price" class="form-label fw-semibold">Price ($)</label>
           <input type="number" id="p-price" name="price" class="form-control"
-            value="${isEdit && item.price != null ? item.price : ''}" placeholder="Opcional" min="0" step="0.01">
+            value="${isEdit && item.price != null ? item.price : ''}" placeholder="Optional" min="0" step="0.01">
         </div>
         <div class="col-sm-6">
-          <label for="p-discount" class="form-label fw-semibold">Descuento (%)</label>
+          <label for="p-discount" class="form-label fw-semibold">Discount (%)</label>
           <input type="number" id="p-discount" name="discount" class="form-control"
             value="${isEdit ? (item.discount ?? 0) : 0}" min="0" max="100" step="1">
         </div>
       </div>
       <div class="row g-3 mb-3">
         <div class="col-sm-6">
-          <label for="p-qty" class="form-label fw-semibold">Cantidad</label>
+          <label for="p-qty" class="form-label fw-semibold">Quantity</label>
           <input type="number" id="p-qty" name="quantity" class="form-control"
             value="${isEdit ? (item.quantity ?? 0) : 0}" min="0" step="1">
         </div>
         <div class="col-sm-6">
-          <label for="p-priority" class="form-label fw-semibold">Prioridad</label>
+          <label for="p-priority" class="form-label fw-semibold">Priority</label>
           <input type="number" id="p-priority" name="priority" class="form-control"
             value="${isEdit ? (item.priority ?? 0) : 0}" step="1">
         </div>
       </div>
       <div class="mb-3">
-        <label for="p-image" class="form-label fw-semibold">Imagen principal</label>
+        <label for="p-image" class="form-label fw-semibold">Main Image</label>
         <input type="file" id="p-image" name="image" class="form-control" accept="image/*">
-        ${isEdit && item.image ? `<div class="field-hint mt-1"><a href="${h(item.image)}" target="_blank" rel="noopener">Ver imagen actual</a></div>` : ''}
+        ${isEdit && item.image ? `<div class="field-hint mt-1"><a href="${h(item.image)}" target="_blank" rel="noopener">View current image</a></div>` : ''}
         <div id="img-status" class="field-hint"></div>
       </div>
       <div class="mb-3">
-        <label for="p-gallery" class="form-label fw-semibold">Galería (múltiples)</label>
+        <label for="p-gallery" class="form-label fw-semibold">Gallery (multiple)</label>
         <input type="file" id="p-gallery" name="gallery" class="form-control" accept="image/*" multiple>
-        ${isEdit && item.gallery?.length ? `<div class="field-hint mt-1">${item.gallery.length} imagen(es) en galería actual</div>` : ''}
+        ${isEdit && item.gallery?.length ? `<div class="field-hint mt-1">${item.gallery.length} image(s) in current gallery</div>` : ''}
         <div id="gal-status" class="field-hint"></div>
       </div>
       <div class="mb-3">
-        <label for="p-end" class="form-label fw-semibold">Fecha fin publicación</label>
+        <label for="p-end" class="form-label fw-semibold">Publication End Date</label>
         <input type="datetime-local" id="p-end" name="dateEndPublish" class="form-control"
           value="${isEdit && item.dateEndPublish ? item.dateEndPublish.slice(0, 16) : ''}">
       </div>
       <div class="mb-3">
-        <label for="p-active" class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+        <label for="p-active" class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
         <select id="p-active" name="active" class="form-select">
-          <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Activo</option>
-          <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactivo</option>
+          <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Active</option>
+          <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactive</option>
         </select>
       </div>
       ${metaFields}
       <div class="d-flex gap-2 mt-4 pt-3 border-top">
         <button type="submit" class="btn btn-danger">
-          <i class="fas fa-save me-1"></i> ${isEdit ? 'Actualizar' : 'Crear'}
+          <i class="fas fa-save me-1"></i> ${isEdit ? 'Update' : 'Create'}
         </button>
         <button type="button" class="btn btn-secondary" id="btn-cancel">
-          <i class="fas fa-times me-1"></i> Cancelar
+          <i class="fas fa-times me-1"></i> Cancel
         </button>
       </div>
     </form>`)
@@ -243,7 +243,7 @@ export function openForm(item) {
       'hr', 'eraser', 'copyformat', '|',
       'fullsize'
     ],
-    placeholder: 'Descripción opcional',
+    placeholder: 'Optional description',
     askBeforePasteHTML: false,
     askBeforePasteFromWord: false,
     defaultActionOnPaste: 'insert_clear_html',
@@ -264,12 +264,12 @@ export function openForm(item) {
     const file = e.target.files[0]
     if (!file) return
     const status = body.querySelector('#img-status')
-    status.textContent = 'Subiendo...'
+    status.textContent = 'Uploading...'
     try {
       imageUrl = await uploadImage(file)
-      status.textContent = '✓ Imagen subida'
+      status.textContent = '✓ Image uploaded'
     } catch (err) {
-      showError(err.message || 'Error al subir la imagen')
+      showError(err.message || 'Error uploading image')
       status.textContent = '✗ Error'
       imageUrl = item?.image || ''
     }
@@ -279,12 +279,12 @@ export function openForm(item) {
     const files = Array.from(e.target.files)
     if (!files.length) return
     const status = body.querySelector('#gal-status')
-    status.textContent = `Subiendo ${files.length} imagen(es)...`
+    status.textContent = `Uploading ${files.length} image(s)...`
     try {
       galleryUrls = await uploadGallery(files)
-      status.textContent = `✓ ${galleryUrls.length} imagen(es) subidas`
+      status.textContent = `✓ ${galleryUrls.length} image(s) uploaded`
     } catch (err) {
-      showError(err.message || 'Error al subir la galería')
+      showError(err.message || 'Error uploading gallery')
       status.textContent = '✗ Error'
       galleryUrls = item?.gallery ? [...item.gallery] : []
     }
@@ -321,7 +321,7 @@ async function handleSubmit(e, item) {
 
   const btn = form.querySelector('[type="submit"]')
   btn.disabled = true
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...'
 
   try {
     const result = item
@@ -330,10 +330,10 @@ async function handleSubmit(e, item) {
     upsertProduct(result)
     closeModal()
     renderList()
-    showSuccess(item ? 'Producto actualizado correctamente' : 'Producto creado correctamente')
+    showSuccess(item ? 'Product updated successfully' : 'Product created successfully')
   } catch (err) {
-    showError(err.message || 'Error al guardar el producto')
+    showError(err.message || 'Error saving product')
     btn.disabled = false
-    btn.innerHTML = `<i class="fas fa-save me-1"></i> ${item ? 'Actualizar' : 'Crear'}`
+    btn.innerHTML = `<i class="fas fa-save me-1"></i> ${item ? 'Update' : 'Create'}`
   }
 }

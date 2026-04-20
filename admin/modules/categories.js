@@ -31,14 +31,14 @@ export async function init(el) {
   containerEl = el
   containerEl.innerHTML = `
     <div class="d-flex align-items-center gap-2 text-muted p-4">
-      <i class="fas fa-spinner fa-spin"></i> Cargando categorías...
+      <i class="fas fa-spinner fa-spin"></i> Categories loading...
     </div>`
 
   try {
     const list = await fetchCategories()
     setCategories(list)
   } catch (err) {
-    showError(err.message || 'Error al cargar las categorías')
+    showError(err.message || 'Error loading categories')
   }
 
   renderList()
@@ -50,8 +50,8 @@ export function renderList() {
 
   const rows = list.map(cat => {
     const badge = cat.active
-      ? '<span class="badge bg-success">Activo</span>'
-      : '<span class="badge bg-danger">Inactivo</span>'
+      ? '<span class="badge bg-success">Active</span>'
+      : '<span class="badge bg-danger">Inactive</span>'
     const date = cat.dateCreation
       ? new Date(cat.dateCreation).toLocaleDateString('es-MX') : '—'
     return `<tr>
@@ -60,7 +60,7 @@ export function renderList() {
       <td>${badge}</td>
       <td>${date}</td>
       <td class="text-center">
-        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${h(cat._id)}" title="Editar">
+        <button class="btn btn-sm btn-outline-primary btn-edit" data-id="${h(cat._id)}" title="Edit">
           <i class="fas fa-pencil-alt"></i>
         </button>
       </td>
@@ -69,9 +69,9 @@ export function renderList() {
 
   containerEl.innerHTML = `
     <div class="section-header">
-      <h2 class="h5 fw-bold mb-0"><i class="fas fa-tags me-2"></i>Categorías</h2>
+      <h2 class="h5 fw-bold mb-0"><i class="fas fa-tags me-2"></i>Categories</h2>
       <button class="btn btn-danger btn-sm" id="btn-new-cat">
-        <i class="fas fa-plus me-1"></i> Nueva Categoría
+        <i class="fas fa-plus me-1"></i> New Category
       </button>
     </div>
     <div class="card shadow-sm">
@@ -79,15 +79,15 @@ export function renderList() {
         <table class="table table-hover table-bordered align-middle mb-0">
           <thead class="table-dark">
             <tr>
-              <th>Nombre</th>
-              <th>Descripción</th>
-              <th>Estado</th>
-              <th>Fecha creación</th>
-              <th style="width:70px">Editar</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Creation Date</th>
+              <th style="width:70px">Edit</th>
             </tr>
           </thead>
           <tbody>
-            ${rows || '<tr><td colspan="5" class="text-center text-muted py-4">Sin categorías registradas</td></tr>'}
+            ${rows || '<tr><td colspan="5" class="text-center text-muted py-4">No categories registered</td></tr>'}
           </tbody>
         </table>
       </div>
@@ -109,41 +109,41 @@ export function openForm(item) {
   const metaFields = isEdit ? `
     <div class="row g-3">
       <div class="col-sm-6">
-        <label class="form-label fw-semibold">Fecha de creación</label>
+        <label class="form-label fw-semibold">Creation Date</label>
         <input type="text" class="form-control" value="${h(item.dateCreation || '—')}" disabled>
       </div>
       <div class="col-sm-6">
-        <label class="form-label fw-semibold">Creado por</label>
+        <label class="form-label fw-semibold">Created By</label>
         <input type="text" class="form-control" value="${h(item.createdBy || '—')}" disabled>
       </div>
     </div>` : ''
 
-  openModal(isEdit ? 'Editar Categoría' : 'Nueva Categoría', `
+  openModal(isEdit ? 'Edit Category' : 'New Category', `
     <form id="cat-form" novalidate>
       <div class="mb-3">
-        <label for="cat-name" class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+        <label for="cat-name" class="form-label fw-semibold">Name <span class="text-danger">*</span></label>
         <input type="text" id="cat-name" name="name" class="form-control"
-          value="${isEdit ? h(item.name) : ''}" placeholder="Nombre de la categoría" autofocus>
+          value="${isEdit ? h(item.name) : ''}" placeholder="Category name" autofocus>
       </div>
       <div class="mb-3">
-        <label for="cat-desc" class="form-label fw-semibold">Descripción</label>
+        <label for="cat-desc" class="form-label fw-semibold">Description</label>
         <textarea id="cat-desc" name="description" class="form-control" rows="3"
-          placeholder="Descripción opcional">${isEdit ? h(item.description || '') : ''}</textarea>
+          placeholder="Optional description">${isEdit ? h(item.description || '') : ''}</textarea>
       </div>
       <div class="mb-3">
-        <label for="cat-active" class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+        <label for="cat-active" class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
         <select id="cat-active" name="active" class="form-select">
-          <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Activo</option>
-          <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactivo</option>
+          <option value="true"  ${activeVal === 'true'  ? 'selected' : ''}>Active</option>
+          <option value="false" ${activeVal === 'false' ? 'selected' : ''}>Inactive</option>
         </select>
       </div>
       ${metaFields}
       <div class="d-flex gap-2 mt-4 pt-3 border-top">
         <button type="submit" class="btn btn-danger">
-          <i class="fas fa-save me-1"></i> ${isEdit ? 'Actualizar' : 'Crear'}
+          <i class="fas fa-save me-1"></i> ${isEdit ? 'Update' : 'Create'}
         </button>
         <button type="button" class="btn btn-secondary" id="btn-cancel">
-          <i class="fas fa-times me-1"></i> Cancelar
+          <i class="fas fa-times me-1"></i> Cancel
         </button>
       </div>
     </form>`)
@@ -168,7 +168,7 @@ async function handleSubmit(e, item) {
 
   const btn = form.querySelector('[type="submit"]')
   btn.disabled = true
-  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando...'
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...'
 
   try {
     const result = item
@@ -177,10 +177,10 @@ async function handleSubmit(e, item) {
     upsertCategory(result)
     closeModal()
     renderList()
-    showSuccess(item ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente')
+    showSuccess(item ? 'Category updated successfully' : 'Category created successfully')
   } catch (err) {
-    showError(err.message || 'Error al guardar la categoría')
+    showError(err.message || 'Error saving category')
     btn.disabled = false
-    btn.innerHTML = `<i class="fas fa-save me-1"></i> ${item ? 'Actualizar' : 'Crear'}`
+    btn.innerHTML = `<i class="fas fa-save me-1"></i> ${item ? 'Update' : 'Create'}`
   }
 }
