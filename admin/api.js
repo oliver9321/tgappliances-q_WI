@@ -10,7 +10,7 @@ const API_URL = import.meta.env.VITE_API_URL;
  */
 async function apiFetch(path, options = {}) {
   const session = getSession()
-  const res = await fetch(`${API_URL}/api/v1${path}`, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ async function apiFetch(path, options = {}) {
  */
 export async function login(username, password) {
 
-  const res = await fetch(`${API_URL}/api/v1/auth/login`, {
+  const res = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
