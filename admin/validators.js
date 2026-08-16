@@ -55,7 +55,7 @@ export function validateCategory(data) {
 
 /**
  * Validates product form data.
- * @param {{ title?: any, category?: any, price?: any, discount?: any, quantity?: any }} data
+ * @param {{ title?: any, category?: any, price?: any, discount?: any, quantity?: any, image?: any }} data
  * @returns {{ valid: boolean, errors: Record<string, string> }}
  */
 export function validateProduct(data) {
@@ -129,3 +129,4 @@ export function validateUser(data, isEdit) {
 
   return { valid: Object.keys(errors).length === 0, errors }
 }
+

@@ -16,7 +16,7 @@ function h(str) {
   if (str == null) return ''
   return String(str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+    .replace(/\"/g, '&quot;').replace(/'/g, '&#39;')
 }
 
 function applyErrors(form, errors) {
@@ -337,3 +337,4 @@ async function handleSubmit(e, item) {
     btn.innerHTML = `<i class="fas fa-save me-1"></i> ${item ? 'Update' : 'Create'}`
   }
 }
+
