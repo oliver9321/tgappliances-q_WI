@@ -11,12 +11,78 @@ let containerEl = null
 let imageUrl = ''
 let galleryUrls = []
 let joditEditor = null  // Jodit instance
+let searchTerm = ''     // current product search query
+let showInactive = false // hide inactive products from the grid by default
 
 function h(str) {
   if (str == null) return ''
   return String(str)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/\"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+/**
+ * Lowercases and strips accents so "Frigidaire" matches "frigidaire" and
+ * "eléctrico" matches "electrico".
+ */
+function normalize(str) {
+  return String(str ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+}
+
+/** Removes HTML tags so the rich-text description can be searched as plain text. */
+function stripHtml(str) {
+  return String(str ?? '').replace(/<[^>]*>/g, ' ')
+}
+
+/**
+ * Returns true when a product matches the query. Every whitespace-separated
+ * term must appear somewhere in the product, so "lg washer" narrows results
+ * instead of widening them.
+ */
+export function matchesSearch(prod, term) {
+  const terms = normalize(term).split(/\s+/).filter(Boolean)
+  if (!terms.length) return true
+
+  const haystack = normalize([
+    prod.title,
+    prod.category,
+    stripHtml(prod.description),
+    prod.price != null ? prod.price : '',
+    prod.active ? 'active' : 'inactive',
+  ].join(' '))
+
+  return terms.every(t => haystack.includes(t))
+}
+
+/**
+ * Applies the grid's visibility rules to a product list: inactive products are
+ * hidden unless explicitly requested, then the search query narrows the result.
+ *
+ * @param {Array} products
+ * @param {{ term?: string, includeInactive?: boolean }} [options]
+ * @returns {Array}
+ */
+export function filterProducts(products, { term = '', includeInactive = false } = {}) {
+  let list = Array.isArray(products) ? products : []
+
+  if (!includeInactive) list = list.filter(p => p.active)
+  if (term.trim()) list = list.filter(p => matchesSearch(p, term))
+
+  return list
+}
+
+/**
+ * Products currently visible. Inactive products stay reachable through the
+ * toggle so they can still be edited or reactivated.
+ */
+function getFilteredProducts() {
+  return filterProducts(getState().products, {
+    term: searchTerm,
+    includeInactive: showInactive,
+  })
 }
 
 function applyErrors(form, errors) {
@@ -53,7 +119,11 @@ export async function init(el) {
 
 export function renderList() {
   if (!containerEl) return
-  const list = getState().products
+  const all = getState().products
+  const inactiveCount = all.filter(p => !p.active).length
+  // Baseline the counter against what the current visibility setting allows.
+  const total = showInactive ? all.length : all.length - inactiveCount
+  const list = getFilteredProducts()
 
   const rows = list.map(prod => {
     const badge = prod.active
@@ -80,6 +150,18 @@ export function renderList() {
     </tr>`
   }).join('')
 
+  const isSearching = Boolean(searchTerm.trim())
+
+  let emptyMessage
+  if (isSearching) {
+    emptyMessage = `No products match “${h(searchTerm)}”`
+  } else if (!showInactive && inactiveCount > 0) {
+    emptyMessage = 'No active products. Enable “Show inactive” to see the rest.'
+  } else {
+    emptyMessage = 'No products registered'
+  }
+  const emptyRow = `<tr><td colspan="7" class="text-center text-muted py-4">${emptyMessage}</td></tr>`
+
   containerEl.innerHTML = `
     <div class="section-header">
       <h2 class="h5 fw-bold mb-0"><i class="fas fa-box me-2"></i>Products</h2>
@@ -88,6 +170,44 @@ export function renderList() {
       </button>
     </div>
     <div class="card shadow-sm">
+      <div class="card-body border-bottom py-3">
+        <div class="row g-2 align-items-center">
+          <div class="col-12 col-md-6 col-lg-5">
+            <label for="prod-search" class="visually-hidden">Search products</label>
+            <div class="input-group">
+              <span class="input-group-text" aria-hidden="true">
+                <i class="fas fa-search"></i>
+              </span>
+              <input
+                type="search"
+                id="prod-search"
+                class="form-control"
+                placeholder="Search by title, category, price..."
+                value="${h(searchTerm)}"
+                autocomplete="off">
+              <button class="btn btn-outline-secondary" type="button" id="prod-search-clear"
+                title="Clear search" aria-label="Clear search"
+                ${isSearching ? '' : 'disabled'}>
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-12 col-md-auto">
+            <div class="form-check form-switch mb-0">
+              <input class="form-check-input" type="checkbox" role="switch"
+                id="prod-show-inactive" ${showInactive ? 'checked' : ''}>
+              <label class="form-check-label small" for="prod-show-inactive">
+                Show inactive${inactiveCount ? ` (${inactiveCount})` : ''}
+              </label>
+            </div>
+          </div>
+          <div class="col-12 col-md-auto ms-md-auto">
+            <span class="text-muted small" id="prod-search-count" aria-live="polite">
+              ${isSearching ? `${list.length} of ${total} product(s)` : `${total} product(s)`}
+            </span>
+          </div>
+        </div>
+      </div>
       <div class="table-responsive">
         <table class="table table-hover table-bordered align-middle mb-0">
           <thead class="table-dark">
@@ -102,7 +222,7 @@ export function renderList() {
             </tr>
           </thead>
           <tbody>
-            ${rows || '<tr><td colspan="7" class="text-center text-muted py-4">No products registered</td></tr>'}
+            ${rows || emptyRow}
           </tbody>
         </table>
       </div>
@@ -114,6 +234,52 @@ export function renderList() {
       const item = getState().products.find(p => p._id === btn.dataset.id)
       if (item) openForm(item)
     })
+  })
+
+  wireSearch()
+}
+
+/**
+ * Wires the search input. Re-rendering the list replaces the input, so focus and
+ * caret position are restored to keep typing uninterrupted.
+ */
+function wireSearch() {
+  const input = containerEl.querySelector('#prod-search')
+  const clearBtn = containerEl.querySelector('#prod-search-clear')
+  const inactiveToggle = containerEl.querySelector('#prod-show-inactive')
+
+  inactiveToggle?.addEventListener('change', e => {
+    showInactive = e.target.checked
+    renderList()
+  })
+
+  if (!input) return
+
+  input.addEventListener('input', e => {
+    searchTerm = e.target.value
+    const caret = e.target.selectionStart
+    renderList()
+    const next = containerEl.querySelector('#prod-search')
+    if (next) {
+      next.focus()
+      next.setSelectionRange(caret, caret)
+    }
+  })
+
+  // Let Escape clear the field while it has focus.
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && searchTerm) {
+      e.preventDefault()
+      searchTerm = ''
+      renderList()
+      containerEl.querySelector('#prod-search')?.focus()
+    }
+  })
+
+  clearBtn?.addEventListener('click', () => {
+    searchTerm = ''
+    renderList()
+    containerEl.querySelector('#prod-search')?.focus()
   })
 }
 
@@ -329,6 +495,19 @@ async function handleSubmit(e, item) {
       : await createProduct(data)
     upsertProduct(result)
     closeModal()
+
+    // Clear an active search that would hide the product just saved, so the
+    // result of the action stays visible.
+    if (searchTerm.trim() && !matchesSearch(result, searchTerm)) {
+      searchTerm = ''
+    }
+
+    // Saving a product as inactive would otherwise make it vanish from the
+    // grid with no explanation; reveal inactive rows so the change is visible.
+    if (!result.active) {
+      showInactive = true
+    }
+
     renderList()
     showSuccess(item ? 'Product updated successfully' : 'Product created successfully')
   } catch (err) {

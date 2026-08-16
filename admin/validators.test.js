@@ -129,35 +129,40 @@ describe('validateCategory', () => {
 
 describe('validateProduct', () => {
   test('valid minimal data passes', () => {
-    const result = validateProduct({ title: 'Fridge', category: 'cat123' })
+    const result = validateProduct({ title: 'Fridge', category: 'cat123', image: 'img.jpg' })
     expect(result.valid).toBe(true)
   })
   test('missing title fails', () => {
-    const result = validateProduct({ title: '', category: 'cat123' })
+    const result = validateProduct({ title: '', category: 'cat123', image: 'img.jpg' })
     expect(result.valid).toBe(false)
     expect(result.errors.title).toBe('El título es obligatorio')
   })
   test('missing category fails', () => {
-    const result = validateProduct({ title: 'Fridge', category: '' })
+    const result = validateProduct({ title: 'Fridge', category: '', image: 'img.jpg' })
     expect(result.valid).toBe(false)
     expect(result.errors.category).toBe('La categoría es obligatoria')
   })
+  test('missing image fails', () => {
+    const result = validateProduct({ title: 'Fridge', category: 'cat123' })
+    expect(result.valid).toBe(false)
+    expect(result.errors.image).toBe('La imagen es obligatoria')
+  })
   test('invalid price fails', () => {
-    const result = validateProduct({ title: 'Fridge', category: 'cat123', price: -5 })
+    const result = validateProduct({ title: 'Fridge', category: 'cat123', image: 'img.jpg', price: -5 })
     expect(result.valid).toBe(false)
     expect(result.errors.price).toBe('El precio debe ser un número positivo o dejarse vacío')
   })
   test('empty price is allowed', () => {
-    const result = validateProduct({ title: 'Fridge', category: 'cat123', price: '' })
+    const result = validateProduct({ title: 'Fridge', category: 'cat123', image: 'img.jpg', price: '' })
     expect(result.valid).toBe(true)
   })
   test('invalid discount fails', () => {
-    const result = validateProduct({ title: 'Fridge', category: 'cat123', discount: 150 })
+    const result = validateProduct({ title: 'Fridge', category: 'cat123', image: 'img.jpg', discount: 150 })
     expect(result.valid).toBe(false)
     expect(result.errors.discount).toBe('El descuento debe ser un entero entre 0 y 100')
   })
   test('invalid quantity fails', () => {
-    const result = validateProduct({ title: 'Fridge', category: 'cat123', quantity: -1 })
+    const result = validateProduct({ title: 'Fridge', category: 'cat123', image: 'img.jpg', quantity: -1 })
     expect(result.valid).toBe(false)
     expect(result.errors.quantity).toBe('La cantidad debe ser un entero no negativo')
   })

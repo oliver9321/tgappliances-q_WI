@@ -115,12 +115,12 @@ describe('formatPrice', () => {
     ;({ formatPrice } = await import('./catalog.js'))
   })
 
-  it('returns "Consultar precio" for null', () => {
-    expect(formatPrice(null)).toBe('Consultar precio')
+  it('returns "---" for null', () => {
+    expect(formatPrice(null)).toBe('---')
   })
 
-  it('returns "Consultar precio" for 0', () => {
-    expect(formatPrice(0)).toBe('Consultar precio')
+  it('returns "---" for 0', () => {
+    expect(formatPrice(0)).toBe('---')
   })
 
   it('returns a string starting with "$" for a positive number', () => {
@@ -251,7 +251,7 @@ describe('initCatalog', () => {
     await initCatalog()
     const todosBtn = document.querySelector('.filter-btn')
     expect(todosBtn).not.toBeNull()
-    expect(todosBtn.textContent).toBe('Todos')
+    expect(todosBtn.textContent).toBe('All')
     expect(todosBtn.classList.contains('active')).toBe(true)
   })
 
