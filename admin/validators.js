@@ -55,7 +55,7 @@ export function validateCategory(data) {
 
 /**
  * Validates product form data.
- * @param {{ title?: any, category?: any, price?: any, discount?: any, quantity?: any }} data
+ * @param {{ title?: any, category?: any, price?: any, discount?: any, quantity?: any, image?: any }} data
  * @returns {{ valid: boolean, errors: Record<string, string> }}
  */
 export function validateProduct(data) {
@@ -67,6 +67,10 @@ export function validateProduct(data) {
 
   if (!data.category || String(data.category).trim() === '') {
     errors.category = 'La categoría es obligatoria'
+  }
+
+  if (!data.image || String(data.image).trim() === '') {
+    errors.image = 'La imagen es obligatoria'
   }
 
   if (data.price !== undefined && data.price !== null && data.price !== '') {
@@ -125,3 +129,4 @@ export function validateUser(data, isEdit) {
 
   return { valid: Object.keys(errors).length === 0, errors }
 }
+
