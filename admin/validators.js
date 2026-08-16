@@ -69,6 +69,10 @@ export function validateProduct(data) {
     errors.category = 'La categoría es obligatoria'
   }
 
+  if (!data.image || String(data.image).trim() === '') {
+    errors.image = 'La imagen es obligatoria'
+  }
+
   if (data.price !== undefined && data.price !== null && data.price !== '') {
     if (!validatePrice(data.price)) {
       errors.price = 'El precio debe ser un número positivo o dejarse vacío'
