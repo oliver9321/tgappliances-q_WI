@@ -27,13 +27,6 @@ export default defineConfig({
   ],
   // root is the workspace root — index.html lives here
   publicDir: 'public',
-  test: {
-    // Provide a default VITE_API_URL so catalog.js and admin modules resolve
-    // to predictable paths when running under vitest.
-    env: {
-      VITE_API_URL: '/api/v1',
-    },
-  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
