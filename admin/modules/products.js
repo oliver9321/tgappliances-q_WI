@@ -185,8 +185,8 @@ export function openForm(item) {
         </div>
       </div>
       <div class="mb-3">
-        <label for="p-image" class="form-label fw-semibold">Main Image</label>
-        <input type="file" id="p-image" name="image" class="form-control" accept="image/*">
+        <label for="p-image" class="form-label fw-semibold">Main Image <span class="text-danger">*</span></label>
+        <input type="file" id="p-image" name="image" class="form-control" accept="image/*" ${isEdit && item.image ? '' : 'required'}>
         ${isEdit && item.image ? `<div class="field-hint mt-1"><a href="${h(item.image)}" target="_blank" rel="noopener">View current image</a></div>` : ''}
         <div id="img-status" class="field-hint"></div>
       </div>
