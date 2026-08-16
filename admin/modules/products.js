@@ -13,6 +13,8 @@ let galleryUrls = []
 let joditEditor = null  // Jodit instance
 let searchTerm = ''     // current product search query
 let showInactive = false // hide inactive products from the grid by default
+let currentPage = 1     // current pagination page (1-indexed)
+const PAGE_SIZE = 10    // products per page
 
 function h(str) {
   if (str == null) return ''
@@ -121,11 +123,17 @@ export function renderList() {
   if (!containerEl) return
   const all = getState().products
   const inactiveCount = all.filter(p => !p.active).length
-  // Baseline the counter against what the current visibility setting allows.
   const total = showInactive ? all.length : all.length - inactiveCount
-  const list = getFilteredProducts()
+  const filtered = getFilteredProducts()
 
-  const rows = list.map(prod => {
+  // --- Pagination math ---
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  if (currentPage > totalPages) currentPage = totalPages
+  if (currentPage < 1) currentPage = 1
+  const startIdx = (currentPage - 1) * PAGE_SIZE
+  const pageItems = filtered.slice(startIdx, startIdx + PAGE_SIZE)
+
+  const rows = pageItems.map(prod => {
     const badge = prod.active
       ? '<span class="badge bg-success">Active</span>'
       : '<span class="badge bg-danger">Inactive</span>'
@@ -161,6 +169,9 @@ export function renderList() {
     emptyMessage = 'No products registered'
   }
   const emptyRow = `<tr><td colspan="7" class="text-center text-muted py-4">${emptyMessage}</td></tr>`
+
+  // --- Pagination controls ---
+  const paginationHtml = totalPages > 1 ? renderPagination(currentPage, totalPages, filtered.length) : ''
 
   containerEl.innerHTML = `
     <div class="section-header">
@@ -203,7 +214,7 @@ export function renderList() {
           </div>
           <div class="col-12 col-md-auto ms-md-auto">
             <span class="text-muted small" id="prod-search-count" aria-live="polite">
-              ${isSearching ? `${list.length} of ${total} product(s)` : `${total} product(s)`}
+              ${isSearching ? `${filtered.length} of ${total} product(s)` : `${total} product(s)`}
             </span>
           </div>
         </div>
@@ -226,6 +237,7 @@ export function renderList() {
           </tbody>
         </table>
       </div>
+      ${paginationHtml}
     </div>`
 
   containerEl.querySelector('#btn-new-prod').addEventListener('click', () => openForm())
@@ -237,6 +249,76 @@ export function renderList() {
   })
 
   wireSearch()
+  wirePagination()
+}
+
+/**
+ * Builds the pagination bar HTML.
+ */
+function renderPagination(page, totalPages, totalItems) {
+  const from = (page - 1) * PAGE_SIZE + 1
+  const to = Math.min(page * PAGE_SIZE, totalItems)
+
+  // Generate page buttons. For many pages, show a window around the current page.
+  let pages = []
+  const maxButtons = 7
+  if (totalPages <= maxButtons) {
+    pages = Array.from({ length: totalPages }, (_, i) => i + 1)
+  } else {
+    pages = [1]
+    let start = Math.max(2, page - 1)
+    let end = Math.min(totalPages - 1, page + 1)
+    if (page <= 3) { start = 2; end = 5 }
+    if (page >= totalPages - 2) { start = totalPages - 4; end = totalPages - 1 }
+    if (start > 2) pages.push('...')
+    for (let i = start; i <= end; i++) pages.push(i)
+    if (end < totalPages - 1) pages.push('...')
+    pages.push(totalPages)
+  }
+
+  const buttons = pages.map(p => {
+    if (p === '...') return '<li class="page-item disabled"><span class="page-link">…</span></li>'
+    const active = p === page ? 'active' : ''
+    return `<li class="page-item ${active}">
+      <button class="page-link" data-page="${p}" ${active ? 'aria-current="page"' : ''}>${p}</button>
+    </li>`
+  }).join('')
+
+  return `
+    <div class="card-footer d-flex flex-wrap align-items-center justify-content-between gap-2 py-2 px-3">
+      <span class="text-muted small">Showing ${from}–${to} of ${totalItems}</span>
+      <nav aria-label="Product list pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item ${page <= 1 ? 'disabled' : ''}">
+            <button class="page-link" data-page="${page - 1}" aria-label="Previous" ${page <= 1 ? 'tabindex="-1"' : ''}>
+              <i class="fas fa-chevron-left"></i>
+            </button>
+          </li>
+          ${buttons}
+          <li class="page-item ${page >= totalPages ? 'disabled' : ''}">
+            <button class="page-link" data-page="${page + 1}" aria-label="Next" ${page >= totalPages ? 'tabindex="-1"' : ''}>
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>`
+}
+
+/** Wires click events on pagination buttons. */
+function wirePagination() {
+  containerEl.querySelectorAll('[data-page]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault()
+      const p = Number(btn.dataset.page)
+      if (!isNaN(p) && p !== currentPage) {
+        currentPage = p
+        renderList()
+        // Scroll the table into view on page change.
+        containerEl.querySelector('.table-responsive')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    })
+  })
 }
 
 /**
@@ -250,6 +332,7 @@ function wireSearch() {
 
   inactiveToggle?.addEventListener('change', e => {
     showInactive = e.target.checked
+    currentPage = 1
     renderList()
   })
 
@@ -257,6 +340,7 @@ function wireSearch() {
 
   input.addEventListener('input', e => {
     searchTerm = e.target.value
+    currentPage = 1
     const caret = e.target.selectionStart
     renderList()
     const next = containerEl.querySelector('#prod-search')
@@ -271,6 +355,7 @@ function wireSearch() {
     if (e.key === 'Escape' && searchTerm) {
       e.preventDefault()
       searchTerm = ''
+      currentPage = 1
       renderList()
       containerEl.querySelector('#prod-search')?.focus()
     }
@@ -278,6 +363,7 @@ function wireSearch() {
 
   clearBtn?.addEventListener('click', () => {
     searchTerm = ''
+    currentPage = 1
     renderList()
     containerEl.querySelector('#prod-search')?.focus()
   })
