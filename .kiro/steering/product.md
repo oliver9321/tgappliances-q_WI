@@ -9,8 +9,8 @@ Drive customer inquiries and phone calls for buying/selling used appliances (ref
 - **Hero** – Image slideshow with CTAs linking to phone
 - **Info Boxes** – Value propositions (inspected, affordable, fast delivery, support)
 - **Shop/Inventory** – Category cards (Refrigerators, Washers & Dryers, Stoves & Ovens) linking to Facebook
-- **About** – Company background, 5+ years experience, 60-day warranty
-- **Policies** – Return policy (30 days), warranty (60 days), delivery info
+- **About** – Company background, 5+ years experience, 90-day warranty
+- **Policies** – Return policy (30 days), warranty (90 days), delivery info
 - **Contact** – Form (via Formspree), address, phone numbers, Google Maps embed
 
 ## Business Info
