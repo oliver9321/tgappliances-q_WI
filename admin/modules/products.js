@@ -6,6 +6,7 @@ import { uploadImage, uploadGallery } from '../imageService.js'
 import { openModal, closeModal, getModalBody } from '../modal.js'
 import { Jodit } from 'jodit'
 import 'jodit/es2021/jodit.min.css'
+import { sizedUrl } from '../../imageUtils.js'
 
 let containerEl = null
 let imageUrl = ''
@@ -140,7 +141,7 @@ export function renderList() {
     const date  = prod.dateCreation ? new Date(prod.dateCreation).toLocaleDateString('es-MX') : '—'
     const price = prod.price != null ? `$${Number(prod.price).toFixed(2)}` : '—'
     const thumb = prod.image
-      ? `<img src="${h(prod.image)}" alt="" class="table-thumb">`
+      ? `<img src="${h(sizedUrl(prod.image, 160))}" alt="" class="table-thumb" width="40" height="40" loading="lazy" decoding="async">`
       : '<span class="no-image"><i class="fas fa-image"></i></span>'
 
     return `<tr>
