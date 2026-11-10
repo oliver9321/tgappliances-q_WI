@@ -4,6 +4,8 @@
  * product grid, and handles SPA-style navigation to product details.
  */
 
+import { imgTag, hydrateImages, prefetchImage, responsiveSources } from './imageUtils.js';
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 const state = {
@@ -14,11 +16,6 @@ const state = {
   currentPage: 1,       // current pagination page
   pageSize: 8,          // products per page
 };
-
-// ─── Placeholder image ────────────────────────────────────────────────────────
-
-const PLACEHOLDER_IMAGE =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%237f8c8d' font-size='14'%3ENo Image%3C/text%3E%3C/svg%3E";
 
 // ─── API Client ───────────────────────────────────────────────────────────────
 
@@ -201,11 +198,10 @@ function renderProductGrid(products) {
   const grid = document.createElement('div');
   grid.className = 'product-grid';
 
-  for (const product of paginated) {
+  paginated.forEach((product, index) => {
     const card = document.createElement('div');
     card.className = 'product-card';
 
-    const imgSrc = product.image && product.image.trim() ? product.image : PLACEHOLDER_IMAGE;
     const priceText = formatPrice(product.price);
     const discountBadge = product.discount > 0
       ? `<span class="product-card-discount">${product.discount}% OFF</span>`
@@ -215,9 +211,18 @@ function renderProductGrid(products) {
       ? `<p><b class="productb text-price-discount">${priceText}</b> <b class="product-card-price"> ${formatPrice(product.price * (product.discount / 100))}</b></p>`
       : `<p><b class="product-card-price">${priceText}</b></p>`;
 
+    // First row loads eagerly: it is usually what the visitor sees first.
+    const imageHtml = imgTag(product.image, {
+      alt: product.title,
+      preset: 'card',
+      eager: index < 4,
+      width: 320,
+      height: 200,
+    });
+
     card.innerHTML = `
-      <div class="product-card-image">
-        <img src="${imgSrc}" alt="${product.title}" loading="lazy" />
+      <div class="product-card-image img-frame">
+        ${imageHtml}
         ${discountBadge}
       </div>
       <div class="product-card-body">
@@ -228,10 +233,15 @@ function renderProductGrid(products) {
     `;
 
     card.addEventListener('click', () => showProductDetails(product._id));
+    // Start downloading the large image as soon as the visitor shows intent.
+    const warm = () => prefetchImage(product.image, 'detail');
+    card.addEventListener('pointerenter', warm, { once: true });
+    card.addEventListener('touchstart', warm, { once: true, passive: true });
     grid.appendChild(card);
-  }
+  });
 
   root.appendChild(grid);
+  hydrateImages(grid);
 
   // Pagination controls — only render if more than one page
   if (totalPages > 1) {
@@ -305,7 +315,6 @@ function renderProductDetails(product) {
   const detailsView = document.getElementById('product-details-view');
   if (!detailsView) return;
 
-  const imgSrc = product.image && product.image.trim() ? product.image : PLACEHOLDER_IMAGE;
   const priceText = formatPrice(product.price);
 
   const finalPriceText =
@@ -330,7 +339,16 @@ function renderProductDetails(product) {
   const galleryHtml = hasGallery
     ? `<div class="product-details-gallery">
         ${product.gallery.map((url, i) => `
-          <img src="${url}" alt="Gallery image ${i + 1}" class="gallery-thumb" data-src="${url}" />
+          <span class="img-frame gallery-frame">
+            ${imgTag(url, {
+              alt: `Gallery image ${i + 1}`,
+              preset: 'thumb',
+              width: 80,
+              height: 80,
+              className: 'gallery-thumb',
+              data: { full: url },
+            })}
+          </span>
         `).join('')}
       </div>`
     : '';
@@ -344,7 +362,15 @@ function renderProductDetails(product) {
       <button class="product-details-back-btn">← Back to Inventory</button>
       <div class="product-details-content">
         <div class="product-details-images">
-          <img id="product-details-main-img" class="product-details-main-image" src="${imgSrc}" alt="${product.title}" />
+          <div class="img-frame product-details-main-frame">
+            ${imgTag(product.image, {
+              id: 'product-details-main-img',
+              alt: product.title,
+              preset: 'detail',
+              eager: true,
+              className: 'product-details-main-image',
+            })}
+          </div>
           ${galleryHtml}
         </div>
         <div class="product-details-info">
@@ -378,15 +404,35 @@ function renderProductDetails(product) {
     showCatalog();
   });
 
+  hydrateImages(detailsView);
+
   if (hasGallery) {
     const mainImg = detailsView.querySelector('#product-details-main-img');
+    const mainFrame = mainImg.closest('.img-frame');
+
     detailsView.querySelectorAll('.gallery-thumb').forEach(thumb => {
+      const full = thumb.dataset.full;
+      thumb.addEventListener('pointerenter', () => prefetchImage(full, 'detail'), { once: true });
       thumb.addEventListener('click', () => {
-        mainImg.src = thumb.dataset.src;
+        const { src, srcset, sizes } = responsiveSources(full, 'detail');
+        if (mainImg.getAttribute('src') !== src) {
+          // Show the skeleton again until the new image is decoded.
+          mainImg.classList.remove('is-loaded');
+          mainFrame?.classList.remove('is-loaded');
+          delete mainImg.dataset.fallback;
+          if (sizes) mainImg.sizes = sizes; else mainImg.removeAttribute('sizes');
+          if (srcset) mainImg.srcset = srcset; else mainImg.removeAttribute('srcset');
+          mainImg.src = src;
+        }
         detailsView.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
         thumb.classList.add('active');
       });
     });
+
+    // Once the main photo is in, fetch the rest of the gallery quietly.
+    const warmGallery = () => product.gallery.forEach(url => prefetchImage(url, 'detail'));
+    if (mainImg.complete) setTimeout(warmGallery, 300);
+    else mainImg.addEventListener('load', () => setTimeout(warmGallery, 300), { once: true });
   }
 }
 // ─── Navigation ───────────────────────────────────────────────────────────────
@@ -411,16 +457,27 @@ async function showProductDetails(id) {
 
   // Show details container, hide catalog while loading
   if (catalogRoot) catalogRoot.style.display = 'none';
-  if (detailsView) {
-    detailsView.innerHTML = `<p style="padding:2rem;color:#7f8c8d;"><i class="fas fa-spinner fa-spin"></i> Loading...</p>`;
-    detailsView.classList.add('active');
-  }
 
   // Update URL with product id (no page reload)
   const url = new URL(window.location.href);
   url.searchParams.set('product', id);
   url.hash = '#shop';
   history.pushState({ productId: id }, '', url.toString());
+
+  // The catalog list already has every published product: render instantly
+  // instead of waiting for another request.
+  const cached = state.products.find(p => p._id === id);
+  if (cached && detailsView) {
+    state.currentProduct = cached;
+    detailsView.classList.add('active');
+    renderProductDetails(cached);
+    return;
+  }
+
+  if (detailsView) {
+    detailsView.innerHTML = `<p style="padding:2rem;color:#7f8c8d;"><i class="fas fa-spinner fa-spin"></i> Loading...</p>`;
+    detailsView.classList.add('active');
+  }
 
   try {
     const product = await fetchProductById(id);

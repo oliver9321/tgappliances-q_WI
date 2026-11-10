@@ -2190,3 +2190,64 @@ body {
   background: #f0f0f0;
   color: #333;
 }
+
+/* ── Image skeleton + fade-in (see imageUtils.js) ── */
+.img-frame {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    var(--bg-gray) 25%,
+    #e8eaed 50%,
+    var(--bg-gray) 75%
+  );
+  background-size: 1200px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.img-frame.is-loaded {
+  background: var(--bg-gray);
+  animation: none;
+}
+
+.lazy-img {
+  opacity: 0;
+  transition: opacity 0.35s ease, transform 0.3s ease;
+}
+
+.lazy-img.is-loaded {
+  opacity: 1;
+}
+
+/* Detail view: reserve space so the page doesn't jump while the photo loads */
+.product-details-main-frame {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: 480px;
+  border-radius: 8px;
+}
+
+.product-details-main-frame .product-details-main-image {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+
+.gallery-frame {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .product-details-main-frame {
+    max-height: 320px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .img-frame { animation: none; }
+  .lazy-img { transition: none; }
+}
